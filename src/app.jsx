@@ -1,5 +1,12 @@
+import { CssBaseline, createTheme, ThemeProvider } from '@mui/material'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import HomePage from './pages/HomePage.jsx'
+
+const theme = createTheme({
+  typography: {
+    fontFamily: '"Vazirmatn", sans-serif',
+  },
+})
 
 const router = createBrowserRouter([
   {
@@ -9,5 +16,10 @@ const router = createBrowserRouter([
 ])
 
 export function App() {
-  return <RouterProvider router={router} />
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <RouterProvider router={router} />
+    </ThemeProvider>
+  )
 }
