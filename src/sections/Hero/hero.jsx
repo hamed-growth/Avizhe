@@ -12,6 +12,8 @@ const OPEN_SECONDS = 1.0;
 const SWAP_AT = 0.5;
 const WHEEL_GAP_MS = 120;
 const VISIBLE_CARDS = 3;
+const INTRO_ONCE_PER_SESSION = false;
+const INTRO_SAFETY_MS = 4000;
 const REVEAL = "[data-hero-title],[data-hero-fade]";
 const BRAND = "AVISHE"; // Latin wordmark (Persian letters must not be letter-spaced)
 const HEADER_TONE = "light"; // "light" = white header + soft scrim (safe on any photo), "dark" = brown header for bright photos
@@ -76,6 +78,9 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
   const [paused, setPaused] = useState(false);
   const [touching, setTouching] = useState(false);
   const [videoOpen, setVideoOpen] = useState(false);
+  const [introDone, setIntroDone] = useState(false);
+  const introPlayedRef = useRef(false);
+  const introSkippedRef = useRef(false);
   const currentSlide = slides[activeSlide];
   const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
 
@@ -194,6 +199,134 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
   };
   goRef.current = go;
 
+  /* ---------- Cards appear first, then the frame opens ---------- */
+  useGSAP(
+    () => {
+      let stored = false;
+      try {
+        stored = INTRO_ONCE_PER_SESSION && sessionStorage.getItem("hero-intro") === "1";
+      } catch {}
+      if (reduceMotion || window.matchMedia("(prefers-reduced-motion: reduce)").matches || stored || introPlayedRef.current) {
+        introSkippedRef.current = true;
+        busyRef.current = false;
+        setIntroDone(true);
+        return;
+      }
+      introPlayedRef.current = true;
+      introSkippedRef.current = false;
+      busyRef.current = true;
+      const frame = frameRef.current;
+      const image = frame.querySelector("img");
+      const header = frame.querySelector("header");
+      const track = fillRef.current.parentElement;
+      const titles = rootRef.current.querySelectorAll("[data-hero-title]");
+      const fades = rootRef.current.querySelectorAll("[data-hero-fade]");
+      const cards = rootRef.current.querySelectorAll("[data-flip-id]");
+      const radius = radiusOf(frame, 36);
+      const opening = { progress: 0 };
+      // Open from the bottom center while preserving the corner radius.
+      const updateFrameClip = () => {
+        const remaining = 1 - opening.progress;
+        const top = 88 * remaining;
+        const horizontal = 30 * remaining;
+        frame.style.clipPath = `inset(${top}% ${horizontal}% 0% ${horizontal}% round ${radius}px)`;
+      };
+      let cancelled = false;
+      let finished = false;
+      let timeline;
+      let decodeTimeout;
+      let safetyTimeout;
+      const clear = () => {
+        gsap.set(frame, { clearProps: "clipPath" });
+        gsap.set(image, { clearProps: "transform" });
+        gsap.set(header, { clearProps: "opacity,transform" });
+        gsap.set(track, { clearProps: "opacity,transform" });
+        gsap.set([...titles, ...fades], {
+          clearProps: "opacity,transform,filter",
+        });
+        gsap.set(cards, { clearProps: "opacity,transform" });
+      };
+      const finish = () => {
+        if (cancelled || finished) return;
+        finished = true;
+        clearTimeout(safetyTimeout);
+        clearTimeout(decodeTimeout);
+        clear();
+        try {
+          sessionStorage.setItem("hero-intro", "1");
+        } catch {}
+        busyRef.current = false;
+        setIntroDone(true);
+      };
+      gsap.set(frame, { clipPath: `inset(88% 30% 0% 30% round ${radius}px)` });
+      gsap.set(image, { scale: 1.3 });
+      gsap.set(header, { opacity: 0, y: -14 });
+      gsap.set(track, {
+        opacity: 0,
+        scaleX: 0.4,
+        transformOrigin: "right center",
+      });
+      gsap.set(titles, { yPercent: 110 });
+      gsap.set(fillRef.current, { scaleX: 0 });
+      gsap.set(fades, { opacity: 0, y: 16 });
+      gsap.set(cards, {
+        opacity: 0, y: 70, scale: 0.82,
+        rotate: (index) => [-6, 0, 6][index % 3],
+      });
+      safetyTimeout = setTimeout(() => {
+        timeline?.kill();
+        finish();
+      }, INTRO_SAFETY_MS);
+      const preload = new Image();
+      preload.src = fullImage(slides[0]);
+      const play = async () => {
+        try {
+          await Promise.race([
+            preload.decode(),
+            new Promise((resolve) => {
+              decodeTimeout = setTimeout(resolve, 1200);
+            }),
+          ]);
+        } catch {}
+        clearTimeout(decodeTimeout);
+        if (cancelled || finished) return;
+        timeline = gsap
+          .timeline({ defaults: { ease: "power3.out" }, onComplete: finish })
+          .to(cards, {
+            opacity: 1, y: 0, scale: 1, rotate: 0,
+            duration: 0.85, stagger: 0.12, ease: "back.out(1.5)",
+          }, 0)
+          .to(
+            opening,
+            {
+              progress: 1,
+              onUpdate: updateFrameClip,
+              duration: 1.15,
+              ease: "power4.inOut",
+            },
+            0.45,
+          )
+          .to(image, { scale: 1, duration: 1.8 }, 0.45)
+          .to(header, { opacity: 1, y: 0, duration: 0.7 }, 1)
+          .to(titles, { yPercent: 0, duration: 0.9, ease: "power4.out" }, 1.15)
+          .to(track, { opacity: 1, scaleX: 1, duration: 0.5 }, 1.3)
+          .to(fades, { opacity: 1, y: 0, duration: 0.7, stagger: 0.08 }, 1.4);
+      };
+      void play();
+      return () => {
+        cancelled = true;
+        clearTimeout(safetyTimeout);
+        clearTimeout(decodeTimeout);
+        timeline?.kill();
+        clear();
+        busyRef.current = false;
+        // Let StrictMode's replacement setup play an interrupted intro.
+        if (!finished) introPlayedRef.current = false;
+      };
+    },
+    { scope: rootRef, dependencies: [] },
+  );
+
   /* ---------- Remaining cards glide into place (Flip) ---------- */
   useGSAP(
     () => {
@@ -225,6 +358,7 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
   useGSAP(
     () => {
       if (!textRef.current) return;
+      if (!introDone && !reduceMotion && !introSkippedRef.current) return;
       if (reduceMotion) {
         gsap.set(gsap.utils.toArray(REVEAL, textRef.current), {
           clearProps: "all",
@@ -259,6 +393,7 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
 
   /* ---------- Timer: the tan line fills, then the next card opens ---------- */
   useEffect(() => {
+    if (!introDone) return;
     if (reduceMotion || videoOpen || !fillRef.current) return;
     const tween = gsap.fromTo(
       fillRef.current,
@@ -272,14 +407,15 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
     );
     progressRef.current = tween;
     return () => tween.kill();
-  }, [activeSlide, reduceMotion, videoOpen]);
+  }, [activeSlide, reduceMotion, videoOpen, introDone]);
 
   useEffect(() => {
+    if (!introDone) return;
     const tween = progressRef.current;
     if (!tween) return;
     if (paused || touching) tween.pause();
     else tween.resume();
-  }, [paused, touching, activeSlide, reduceMotion, videoOpen]);
+  }, [paused, touching, activeSlide, reduceMotion, videoOpen, introDone]);
 
   /* ---------- Scroll (wheel) = next / previous slide ---------- */
   useEffect(() => {
@@ -398,7 +534,10 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
                     playsInline: true,
                     preload: "none",
                   }
-                : { alt: "" })}
+                : {
+                    alt: "",
+                    ...(index === 0 ? { fetchPriority: "high" } : {}),
+                  })}
               aria-hidden="true"
               sx={{
                 position: "absolute",
@@ -631,6 +770,7 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
             ref={trackRef}
             dir="rtl"
             onPointerDown={(event) => {
+              if (!introDone) return;
               if (event.pointerType === "mouse" || !event.isPrimary) return;
               suppressClickRef.current = false;
               swipeRef.current = {
