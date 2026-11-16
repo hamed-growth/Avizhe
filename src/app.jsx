@@ -4,7 +4,7 @@ import HomePage from './pages/HomePage.jsx'
 
 const theme = createTheme({
   typography: {
-    fontFamily: '"Vazirmatn", sans-serif',
+    fontFamily: '"Estedad", Tahoma, sans-serif',
   },
 })
 
