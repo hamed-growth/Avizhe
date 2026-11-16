@@ -362,19 +362,26 @@ export function HeroSection({ onMenuClick }) {
         overflow: "hidden",
         bgcolor: T.bg,
         color: T.text,
-        minHeight: "100dvh",
+        height: "100vh",
+        "@supports (height: 100svh)": { height: "100svh" },
+        minHeight: { xs: 560, md: 640 },
+        display: "flex",
+        flexDirection: "column",
         px: { xs: 2, md: 6 },
-        pt: 2.5,
-        pb: { xs: 3, md: 6 },
+        pt: { xs: 1.5, md: 2.5 },
+        pb: { xs: 1.5, md: 5 },
       }}
     >
       <Box
         sx={{
+          width: "100%",
           maxWidth: 1200,
           mx: "auto",
+          flex: 1,
+          minHeight: 0,
           display: "flex",
           flexDirection: "column",
-          gap: { xs: 3, md: 4 },
+          gap: { xs: 1.5, md: 4 },
         }}
       >
         {/* Header */}
@@ -424,10 +431,16 @@ export function HeroSection({ onMenuClick }) {
 
         <Box
           sx={{
+            flex: 1,
+            minHeight: 0,
             display: "grid",
             gridTemplateColumns: { xs: "1fr", md: "5fr 7fr" },
-            gap: { xs: 3, md: 8 },
-            alignItems: "center",
+            gridTemplateRows: {
+              xs: "minmax(0, 1fr) auto",
+              md: "minmax(0, 1fr)",
+            },
+            gap: { xs: 1.5, md: 8 },
+            alignItems: { xs: "stretch", md: "center" },
           }}
         >
           {/* Image frame */}
@@ -438,8 +451,8 @@ export function HeroSection({ onMenuClick }) {
               position: "relative",
               overflow: "hidden",
               borderRadius: { xs: "32px", md: "40px" },
-              aspectRatio: { xs: "7 / 6", md: "auto" },
-              height: { md: "min(72dvh, 620px)" },
+              height: "100%",
+              minHeight: 150,
               bgcolor: "#dfe5ef",
               boxShadow: "0 20px 50px rgba(15,25,60,.12)",
             }}
@@ -472,6 +485,41 @@ export function HeroSection({ onMenuClick }) {
                 }}
               />
             ))}
+            {slides[bgSlide].fullVideo && (
+              <Button
+                onClick={() => setVideoOpen(true)}
+                sx={{
+                  position: "absolute",
+                  zIndex: 1,
+                  bottom: 14,
+                  insetInlineStart: 14,
+                  px: 2,
+                  py: 0.6,
+                  gap: 1,
+                  minWidth: 0,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: T.accent,
+                  bgcolor: "rgba(255,255,255,.92)",
+                  borderRadius: "999px",
+                  boxShadow: "0 6px 18px rgba(0,0,0,.18)",
+                  "&:hover": { bgcolor: "#fff" },
+                }}
+              >
+                <Box
+                  component="span"
+                  aria-hidden="true"
+                  sx={{
+                    width: 0,
+                    height: 0,
+                    borderTop: "5px solid transparent",
+                    borderBottom: "5px solid transparent",
+                    borderLeft: "8px solid currentColor",
+                  }}
+                />
+                تماشای ویدیو
+              </Button>
+            )}
           </Box>
 
           {/* Text + queue */}
@@ -481,7 +529,7 @@ export function HeroSection({ onMenuClick }) {
               sx={{
                 width: 96,
                 height: 4,
-                mb: 3,
+                mb: { xs: 1.5, md: 3 },
                 borderRadius: 4,
                 bgcolor: T.track,
                 overflow: "hidden",
@@ -499,14 +547,24 @@ export function HeroSection({ onMenuClick }) {
             </Box>
 
             <Box ref={textRef}>
-              <Box sx={{ overflow: "hidden", pb: "0.25em", mb: 1.5 }}>
+              <Box
+                sx={{
+                  overflow: "hidden",
+                  pb: "0.25em",
+                  mb: { xs: 0.5, md: 1.5 },
+                }}
+              >
                 <Typography
                   component="h1"
                   data-hero-title=""
                   sx={{
-                    fontSize: { xs: "1.85rem", md: "2.9rem" },
+                    fontSize: {
+                      xs: "clamp(1.3rem, 5.4vw, 1.7rem)",
+                      md: "2.9rem",
+                    },
                     fontWeight: 800,
-                    lineHeight: 1.55,
+                    lineHeight: { xs: 1.5, md: 1.55 },
+                    minHeight: { xs: "3em", md: 0 },
                     color: T.text,
                     willChange: "transform",
                   }}
@@ -518,46 +576,22 @@ export function HeroSection({ onMenuClick }) {
                 data-hero-fade=""
                 sx={{
                   color: T.muted,
-                  fontSize: { xs: "0.95rem", md: "1.05rem" },
-                  lineHeight: 2.1,
+                  fontSize: { xs: "0.85rem", md: "1.05rem" },
+                  lineHeight: { xs: 1.85, md: 2.1 },
                   maxWidth: 480,
+                  display: "-webkit-box",
+                  WebkitBoxOrient: "vertical",
+                  WebkitLineClamp: 3,
+                  overflow: "hidden",
+                  minHeight: { xs: "calc(3 * 1.85em)", md: 0 },
+                  "@media (max-height: 680px)": {
+                    WebkitLineClamp: 2,
+                    minHeight: { xs: "calc(2 * 1.85em)", md: 0 },
+                  },
                 }}
               >
                 {currentSlide.description}
               </Typography>
-              {currentSlide.fullVideo && (
-                <Button
-                  data-hero-fade=""
-                  variant="outlined"
-                  onClick={() => setVideoOpen(true)}
-                  sx={{
-                    mt: 2,
-                    px: 2.25,
-                    py: 0.9,
-                    gap: 1.25,
-                    color: T.accent,
-                    borderColor: "rgba(31,79,216,.35)",
-                    borderRadius: "999px",
-                    "&:hover": {
-                      borderColor: T.accent,
-                      bgcolor: "rgba(31,79,216,.06)",
-                    },
-                  }}
-                >
-                  <Box
-                    component="span"
-                    aria-hidden="true"
-                    sx={{
-                      width: 0,
-                      height: 0,
-                      borderTop: "5px solid transparent",
-                      borderBottom: "5px solid transparent",
-                      borderLeft: "8px solid currentColor",
-                    }}
-                  />
-                  تماشای ویدیو
-                </Button>
-              )}
             </Box>
 
             {/* Queue of upcoming slides */}
@@ -571,7 +605,7 @@ export function HeroSection({ onMenuClick }) {
                 if (!event.currentTarget.contains(event.relatedTarget))
                   setPaused(false);
               }}
-              sx={{ mt: { xs: 4, md: 5 }, maxWidth: 520 }}
+              sx={{ mt: { xs: 1.5, md: 5 }, maxWidth: 520 }}
             >
               <Box
                 ref={trackRef}
@@ -646,7 +680,10 @@ export function HeroSection({ onMenuClick }) {
                       sx={{
                         position: "relative",
                         flex: "0 0 calc((100% - 24px) / 3)",
-                        aspectRatio: "1 / 1.05",
+                        height: {
+                          xs: "clamp(60px, 11svh, 96px)",
+                          md: "clamp(90px, 15svh, 130px)",
+                        },
                         p: 0,
                         border: 0,
                         overflow: "hidden",
@@ -753,8 +790,8 @@ export function HeroSection({ onMenuClick }) {
             </Box>
             <Box
               component="video"
-              src={currentSlide.fullVideo}
-              poster={currentSlide.poster}
+              src={slides[bgSlide].fullVideo}
+              poster={slides[bgSlide].poster}
               controls
               autoPlay
               playsInline
