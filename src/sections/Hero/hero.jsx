@@ -49,6 +49,8 @@ const slides = [
 ];
 
 const N = slides.length;
+const fa = (n) =>
+  new Intl.NumberFormat("fa-IR", { minimumIntegerDigits: 2 }).format(n);
 const fullImage = (s) => s.poster || `/media/hero/${s.image}.webp`;
 
 export function HeroSection() {
@@ -125,7 +127,7 @@ export function HeroSection() {
       top: r.top - rootRect.top,
       width: r.width,
       height: r.height,
-      borderRadius: 14,
+      borderRadius: 12,
     });
 
     // The card leaves the queue right now; the clone takes its exact place.
@@ -331,15 +333,6 @@ export function HeroSection() {
         justifyContent: "flex-end",
         position: "relative",
         overflow: "hidden",
-        "&:before": {
-          content: '""',
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          zIndex: 1,
-          boxShadow: "inset -100px -62px 100px -18px rgba(32,36,42,0.58)",
-        },
       }}
     >
       {/* Fullscreen backgrounds */}
@@ -406,15 +399,10 @@ export function HeroSection() {
           bottom: 0,
           left: 0,
           right: 0,
-          p: 2,
-          height: "50%",
+          height: "70%",
+          pointerEvents: "none",
           background:
-            "linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent)",
-          backdropFilter: "blur(5px)",
-          WebkitBackdropFilter: "blur(5px)",
-          maskImage: "linear-gradient(to top, #000 0%, transparent 100%)",
-          WebkitMaskImage:
-            "linear-gradient(to top, #000 0%, #000 50% , #00000063 100%)",
+            "linear-gradient(to top, rgba(8,12,18,.82) 0%, rgba(8,12,18,.45) 45%, rgba(8,12,18,0) 100%)",
         }}
       />
 
@@ -440,19 +428,26 @@ export function HeroSection() {
             aria-hidden="true"
             data-hero-line=""
             sx={{
-              width: 56,
-              height: 4,
-              mb: 2,
+              width: 32,
+              height: 2,
+              mb: 2.5,
               bgcolor: "white",
               borderRadius: "1px",
               transformOrigin: "right center",
             }}
           />
-          <Box sx={{ overflow: "hidden", pb: "0.2em", mb: 1.8 }}>
+          <Box
+            sx={{ overflow: "hidden", pb: "0.25em", mb: 1.5, maxWidth: 560 }}
+          >
             <Typography
               variant="h4"
               data-hero-title=""
-              sx={{ willChange: "transform" }}
+              sx={{
+                fontSize: { xs: "1.7rem", sm: "2.4rem" },
+                fontWeight: 600,
+                lineHeight: 1.6,
+                willChange: "transform",
+              }}
             >
               {currentSlide.title}
             </Typography>
@@ -460,7 +455,13 @@ export function HeroSection() {
           <Typography
             variant="subtitle2"
             data-hero-fade=""
-            sx={{ color: "#f6f6f6", textAlign: "right", pl: { xs: 0, sm: 10 } }}
+            sx={{
+              color: "rgba(255,255,255,.78)",
+              textAlign: "right",
+              fontSize: "0.85rem",
+              lineHeight: 2.1,
+              maxWidth: 440,
+            }}
           >
             {currentSlide.description}
           </Typography>
@@ -525,7 +526,7 @@ export function HeroSection() {
           sx={{
             alignSelf: "flex-end",
             flexShrink: 0,
-            width: "min(100%, 440px)",
+            width: "min(100%, 320px)",
           }}
         >
           <Box
@@ -578,7 +579,7 @@ export function HeroSection() {
               alignItems: "center",
               gap: "5%",
               overflow: "hidden",
-              height: 108,
+              height: 92,
               direction: "ltr",
               touchAction: "pan-y pinch-zoom",
               userSelect: "none",
@@ -600,16 +601,17 @@ export function HeroSection() {
                   onClick={() => go(index)}
                   sx={{
                     position: "relative",
-                    flex: "0 0 30%",
-                    height: 100,
+                    flex: "0 0 29%",
+                    height: 84,
                     p: 0,
                     overflow: "hidden",
                     cursor: "pointer",
-                    borderRadius: "14px",
-                    border: "1px solid rgba(255,255,255,.3)",
+                    borderRadius: "12px",
+                    border: 0,
                     bgcolor: "rgba(255,255,255,.1)",
-                    opacity: 0.9,
-                    "&:hover": { opacity: 1 },
+                    boxShadow: "0 6px 18px rgba(0,0,0,.25)",
+                    filter: "brightness(.88)",
+                    "&:hover": { filter: "brightness(1)" },
                     "&:focus-visible": {
                       outline: "2px solid white",
                       outlineOffset: 4,
@@ -640,8 +642,8 @@ export function HeroSection() {
                         display: "grid",
                         placeItems: "center",
                         color: "white",
-                        fontSize: 24,
-                        background: "rgba(0,0,0,.15)",
+                        fontSize: 14,
+                        background: "rgba(0,0,0,.28)",
                       }}
                     >
                       ▶
@@ -656,61 +658,75 @@ export function HeroSection() {
           <Box
             sx={{
               display: "flex",
-              justifyContent: "center",
+              alignItems: "center",
+              justifyContent: "space-between",
               direction: "ltr",
-              mt: 1,
+              mt: 0.5,
             }}
           >
-            {slides.map((slide, index) => {
-              const active = activeSlide === index;
-              return (
-                <Box
-                  key={slide.image}
-                  component="button"
-                  type="button"
-                  aria-label={`انتخاب ${slide.name}`}
-                  aria-pressed={active}
-                  onClick={() => go(index)}
-                  sx={{
-                    border: 0,
-                    p: "10px 3px",
-                    bgcolor: "transparent",
-                    cursor: "pointer",
-                    "&:focus-visible": {
-                      outline: "2px solid white",
-                      borderRadius: 1,
-                    },
-                  }}
-                >
+            <Box sx={{ display: "flex" }}>
+              {slides.map((slide, index) => {
+                const active = activeSlide === index;
+                return (
                   <Box
-                    component="span"
+                    key={slide.image}
+                    component="button"
+                    type="button"
+                    aria-label={`انتخاب ${slide.name}`}
+                    aria-pressed={active}
+                    onClick={() => go(index)}
                     sx={{
-                      position: "relative",
-                      display: "block",
-                      overflow: "hidden",
-                      height: 3,
-                      borderRadius: 10,
-                      width: active ? 40 : 17,
-                      bgcolor: "rgba(255,255,255,.3)",
-                      transition: reduceMotion ? "none" : "width 300ms ease",
+                      border: 0,
+                      p: "10px 3px",
+                      bgcolor: "transparent",
+                      cursor: "pointer",
+                      "&:focus-visible": {
+                        outline: "2px solid white",
+                        borderRadius: 1,
+                      },
                     }}
                   >
-                    {active && (
-                      <Box
-                        component="span"
-                        ref={(el) => (fillRefs.current[index] = el)}
-                        sx={{
-                          position: "absolute",
-                          inset: 0,
-                          bgcolor: "white",
-                          transformOrigin: "left center",
-                        }}
-                      />
-                    )}
+                    <Box
+                      component="span"
+                      sx={{
+                        position: "relative",
+                        display: "block",
+                        overflow: "hidden",
+                        height: 2,
+                        borderRadius: 10,
+                        width: active ? 32 : 10,
+                        bgcolor: "rgba(255,255,255,.3)",
+                        transition: reduceMotion ? "none" : "width 300ms ease",
+                      }}
+                    >
+                      {active && (
+                        <Box
+                          component="span"
+                          ref={(el) => (fillRefs.current[index] = el)}
+                          sx={{
+                            position: "absolute",
+                            inset: 0,
+                            bgcolor: "white",
+                            transformOrigin: "left center",
+                          }}
+                        />
+                      )}
+                    </Box>
                   </Box>
-                </Box>
-              );
-            })}
+                );
+              })}
+            </Box>
+            <Typography
+              aria-hidden="true"
+              sx={{
+                fontSize: 12,
+                letterSpacing: ".08em",
+                color: "rgba(255,255,255,.7)",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            >
+              {fa(activeSlide + 1)} / {fa(N)}
+            </Typography>
           </Box>
         </Box>
       </Box>
