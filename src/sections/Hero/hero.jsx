@@ -7,12 +7,23 @@ import { Box, Button, Dialog, Typography, useMediaQuery } from "@mui/material";
 gsap.registerPlugin(useGSAP, Flip);
 
 /* ---------- Config ---------- */
-const SLIDE_SECONDS = 5; // auto-advance time
-const OPEN_SECONDS = 1.05; // card -> fullscreen
-const SWAP_AT = 0.55; // text + dots switch to the new slide
-const WHEEL_GAP_MS = 120; // silence needed between two wheel gestures
+const SLIDE_SECONDS = 5; // auto-advance (the blue bar fills over this time)
+const OPEN_SECONDS = 1.0; // card -> image frame
+const SWAP_AT = 0.5; // text switches to the new slide
+const WHEEL_GAP_MS = 120;
 const VISIBLE_CARDS = 3;
-const REVEAL = "[data-hero-line],[data-hero-title],[data-hero-fade]";
+const REVEAL = "[data-hero-title],[data-hero-fade]";
+const BRAND = "آویژه";
+
+const T = {
+  bg: "#f7f9fc",
+  text: "#0b1530",
+  muted: "#6b7385",
+  accent: "#1f4fd8",
+  track: "#d9dfeb",
+  leaf: "#1b2b4b",
+  leaf2: "#8fa1bd",
+};
 
 const slides = [
   {
@@ -49,14 +60,28 @@ const slides = [
 ];
 
 const N = slides.length;
-const fa = (n) =>
-  new Intl.NumberFormat("fa-IR", { minimumIntegerDigits: 2 }).format(n);
 const fullImage = (s) => s.poster || `/media/hero/${s.image}.webp`;
+const radiusOf = (el, fallback) =>
+  parseFloat(getComputedStyle(el).borderTopLeftRadius) || fallback;
 
-export function HeroSection() {
-  // activeSlide    -> text + dots (switches mid-transition)
+function Logo() {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+      <svg width="34" height="30" viewBox="0 0 34 30" aria-hidden="true">
+        <path d="M2 3c9-1 15 4 15 14v10C7 27 1 20 2 3z" fill={T.leaf} />
+        <path d="M32 4c-8 0-14 4-15 13v10c10-1 17-8 15-23z" fill={T.leaf2} />
+      </svg>
+      <Typography sx={{ fontSize: 20, fontWeight: 700, color: T.text }}>
+        {BRAND}
+      </Typography>
+    </Box>
+  );
+}
+
+export function HeroSection({ onMenuClick }) {
+  // activeSlide    -> text (switches mid-transition)
   // carouselActive -> card queue (switches at the START of the transition)
-  // bgSlide        -> fullscreen background (switches when the card is fully open)
+  // bgSlide        -> image in the frame (switches when the card has landed)
   const [activeSlide, setActiveSlide] = useState(0);
   const [carouselActive, setCarouselActive] = useState(0);
   const [bgSlide, setBgSlide] = useState(0);
@@ -68,11 +93,12 @@ export function HeroSection() {
 
   const rootRef = useRef(null);
   const textRef = useRef(null);
+  const frameRef = useRef(null);
   const trackRef = useRef(null);
   const cloneRef = useRef(null);
   const cloneImgRef = useRef(null);
+  const fillRef = useRef(null);
   const cardRefs = useRef([]);
-  const fillRefs = useRef([]);
   const videoRef = useRef(null);
   const swipeRef = useRef(null);
   const suppressClickRef = useRef(false);
@@ -95,7 +121,7 @@ export function HeroSection() {
     setActiveSlide(index);
   };
 
-  /* ---------- Core: open the target card to fullscreen ---------- */
+  /* ---------- Core: the card flies into the image frame ---------- */
   const go = (target) => {
     const from = activeRef.current;
     const root = rootRef.current;
@@ -109,13 +135,14 @@ export function HeroSection() {
     }
     busyRef.current = true;
 
-    // Origin rect: the target card (clamped to the track if it is off-screen).
     const rootRect = root.getBoundingClientRect();
+    const frame = frameRef.current;
+    const fr = frame.getBoundingClientRect();
     const trackRect = trackRef.current.getBoundingClientRect();
-    const r = cardRefs.current[target].getBoundingClientRect();
-    const left = Math.min(r.left, trackRect.right - r.width);
+    const card = cardRefs.current[target];
+    const r = card.getBoundingClientRect();
+    const startLeft = Math.min(r.left, trackRect.right - r.width);
 
-    // Remember where every card is now; Flip animates them after React re-orders.
     flipRef.current = Flip.getState(root.querySelectorAll("[data-flip-id]"));
 
     const clone = cloneRef.current;
@@ -123,15 +150,14 @@ export function HeroSection() {
     cloneImg.src = fullImage(slides[target]);
     gsap.set(clone, {
       display: "block",
-      left: left - rootRect.left,
+      left: startLeft - rootRect.left,
       top: r.top - rootRect.top,
       width: r.width,
       height: r.height,
-      borderRadius: 12,
+      borderRadius: radiusOf(card, 22),
     });
 
-    // The card leaves the queue right now; the clone takes its exact place.
-    setCarouselActive(target);
+    setCarouselActive(target); // the card leaves the queue; the clone takes its place
 
     const textEls = gsap.utils.toArray(REVEAL, textRef.current);
     tlRef.current = gsap
@@ -161,11 +187,11 @@ export function HeroSection() {
       .to(
         clone,
         {
-          left: 0,
-          top: 0,
-          width: rootRect.width,
-          height: rootRect.height,
-          borderRadius: 0,
+          left: fr.left - rootRect.left,
+          top: fr.top - rootRect.top,
+          width: fr.width,
+          height: fr.height,
+          borderRadius: radiusOf(frame, 32),
           duration: OPEN_SECONDS,
           ease: "power3.inOut",
         },
@@ -173,8 +199,8 @@ export function HeroSection() {
       )
       .fromTo(
         cloneImg,
-        { scale: 1.12 },
-        { scale: 1, duration: OPEN_SECONDS + 0.25, ease: "power3.out" },
+        { scale: 1.15 },
+        { scale: 1, duration: OPEN_SECONDS + 0.2, ease: "power3.out" },
         0,
       )
       .add(() => commit(target), SWAP_AT);
@@ -219,14 +245,9 @@ export function HeroSection() {
         return;
       }
       gsap.fromTo(
-        "[data-hero-line]",
-        { opacity: 0, scaleX: 0.4, y: 0, filter: "none" },
-        { opacity: 1, scaleX: 1, duration: 0.6, ease: "power3.out" },
-      );
-      gsap.fromTo(
         "[data-hero-title]",
         { yPercent: 110, opacity: 1, y: 0, filter: "none" },
-        { yPercent: 0, duration: 0.85, ease: "power4.out", delay: 0.08 },
+        { yPercent: 0, duration: 0.85, ease: "power4.out" },
       );
       gsap.fromTo(
         "[data-hero-fade]",
@@ -238,7 +259,7 @@ export function HeroSection() {
           duration: 0.7,
           ease: "power3.out",
           stagger: 0.08,
-          delay: 0.18,
+          delay: 0.12,
         },
       );
     },
@@ -249,13 +270,11 @@ export function HeroSection() {
     },
   );
 
-  /* ---------- Timed auto-advance: the active dot fills over SLIDE_SECONDS ---------- */
+  /* ---------- Timed auto-advance: the blue bar fills, then the next card opens ---------- */
   useEffect(() => {
-    if (reduceMotion || videoOpen) return;
-    const fill = fillRefs.current[activeSlide];
-    if (!fill) return;
+    if (reduceMotion || videoOpen || !fillRef.current) return;
     const tween = gsap.fromTo(
-      fill,
+      fillRef.current,
       { scaleX: 0 },
       {
         scaleX: 1,
@@ -294,7 +313,7 @@ export function HeroSection() {
         locked = true;
         return;
       }
-      if (locked && gap < WHEEL_GAP_MS) return; // same trackpad gesture / inertia
+      if (locked && gap < WHEEL_GAP_MS) return;
       locked = true;
       goRef.current(next);
     };
@@ -302,7 +321,7 @@ export function HeroSection() {
     return () => el.removeEventListener("wheel", onWheel);
   }, [videoOpen]);
 
-  /* ---------- Video background ---------- */
+  /* ---------- Video in the frame ---------- */
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -325,57 +344,378 @@ export function HeroSection() {
   return (
     <Box
       ref={rootRef}
+      component="section"
+      dir="rtl"
+      aria-roledescription="carousel"
+      aria-label="معرفی آویژه"
+      onKeyDown={(event) => {
+        // RTL: ArrowLeft moves forward, ArrowRight moves back
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+          event.preventDefault();
+          go(
+            (activeRef.current + (event.key === "ArrowLeft" ? 1 : -1) + N) % N,
+          );
+        }
+      }}
       sx={{
-        backgroundColor: "#c3c3c3",
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "flex-end",
         position: "relative",
         overflow: "hidden",
+        bgcolor: T.bg,
+        color: T.text,
+        minHeight: "100dvh",
+        px: { xs: 2, md: 6 },
+        pt: 2.5,
+        pb: { xs: 3, md: 6 },
       }}
     >
-      {/* Fullscreen backgrounds */}
-      {slides.map((slide, index) => (
+      <Box
+        sx={{
+          maxWidth: 1200,
+          mx: "auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: { xs: 3, md: 4 },
+        }}
+      >
+        {/* Header */}
         <Box
-          key={slide.image}
-          component={slide.video ? "video" : "img"}
-          src={slide.video || `/media/hero/${slide.image}.webp`}
-          {...(slide.video
-            ? {
-                ref: videoRef,
-                poster: slide.poster,
-                muted: true,
-                loop: true,
-                playsInline: true,
-                preload: "none",
-              }
-            : { alt: "" })}
-          aria-hidden="true"
+          component="header"
           sx={{
-            position: "absolute",
-            inset: 0,
-            display: "block",
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            borderRadius: "3px",
-            opacity: bgSlide === index ? 1 : 0,
-            pointerEvents: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            px: 1,
           }}
-        />
-      ))}
+        >
+          <Logo />
+          <Box
+            component="button"
+            type="button"
+            aria-label="منو"
+            onClick={onMenuClick}
+            sx={{
+              display: "grid",
+              gap: "6px",
+              p: 1.25,
+              border: 0,
+              bgcolor: "transparent",
+              color: T.text,
+              cursor: "pointer",
+              "&:focus-visible": {
+                outline: `2px solid ${T.accent}`,
+                borderRadius: 1,
+              },
+            }}
+          >
+            {[0, 1, 2].map((i) => (
+              <Box
+                key={i}
+                component="span"
+                sx={{
+                  width: 26,
+                  height: 2.5,
+                  bgcolor: "currentColor",
+                  borderRadius: 2,
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
 
-      {/* The card that grows into the new background */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", md: "5fr 7fr" },
+            gap: { xs: 3, md: 8 },
+            alignItems: "center",
+          }}
+        >
+          {/* Image frame */}
+          <Box
+            ref={frameRef}
+            sx={{
+              order: { xs: 1, md: 2 },
+              position: "relative",
+              overflow: "hidden",
+              borderRadius: { xs: "32px", md: "40px" },
+              aspectRatio: { xs: "7 / 6", md: "auto" },
+              height: { md: "min(72dvh, 620px)" },
+              bgcolor: "#dfe5ef",
+              boxShadow: "0 20px 50px rgba(15,25,60,.12)",
+            }}
+          >
+            {slides.map((slide, index) => (
+              <Box
+                key={slide.image}
+                component={slide.video ? "video" : "img"}
+                src={slide.video || `/media/hero/${slide.image}.webp`}
+                {...(slide.video
+                  ? {
+                      ref: videoRef,
+                      poster: slide.poster,
+                      muted: true,
+                      loop: true,
+                      playsInline: true,
+                      preload: "none",
+                    }
+                  : { alt: "" })}
+                aria-hidden="true"
+                sx={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "block",
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  opacity: bgSlide === index ? 1 : 0,
+                  pointerEvents: "none",
+                }}
+              />
+            ))}
+          </Box>
+
+          {/* Text + queue */}
+          <Box sx={{ order: { xs: 2, md: 1 }, px: { xs: 1, md: 0 } }}>
+            <Box
+              aria-hidden="true"
+              sx={{
+                width: 96,
+                height: 4,
+                mb: 3,
+                borderRadius: 4,
+                bgcolor: T.track,
+                overflow: "hidden",
+              }}
+            >
+              <Box
+                ref={fillRef}
+                sx={{
+                  height: "100%",
+                  borderRadius: 4,
+                  bgcolor: T.accent,
+                  transformOrigin: "right center",
+                }}
+              />
+            </Box>
+
+            <Box ref={textRef}>
+              <Box sx={{ overflow: "hidden", pb: "0.25em", mb: 1.5 }}>
+                <Typography
+                  component="h1"
+                  data-hero-title=""
+                  sx={{
+                    fontSize: { xs: "1.85rem", md: "2.9rem" },
+                    fontWeight: 800,
+                    lineHeight: 1.55,
+                    color: T.text,
+                    willChange: "transform",
+                  }}
+                >
+                  {currentSlide.title}
+                </Typography>
+              </Box>
+              <Typography
+                data-hero-fade=""
+                sx={{
+                  color: T.muted,
+                  fontSize: { xs: "0.95rem", md: "1.05rem" },
+                  lineHeight: 2.1,
+                  maxWidth: 480,
+                }}
+              >
+                {currentSlide.description}
+              </Typography>
+              {currentSlide.fullVideo && (
+                <Button
+                  data-hero-fade=""
+                  variant="outlined"
+                  onClick={() => setVideoOpen(true)}
+                  sx={{
+                    mt: 2,
+                    px: 2.25,
+                    py: 0.9,
+                    gap: 1.25,
+                    color: T.accent,
+                    borderColor: "rgba(31,79,216,.35)",
+                    borderRadius: "999px",
+                    "&:hover": {
+                      borderColor: T.accent,
+                      bgcolor: "rgba(31,79,216,.06)",
+                    },
+                  }}
+                >
+                  <Box
+                    component="span"
+                    aria-hidden="true"
+                    sx={{
+                      width: 0,
+                      height: 0,
+                      borderTop: "5px solid transparent",
+                      borderBottom: "5px solid transparent",
+                      borderLeft: "8px solid currentColor",
+                    }}
+                  />
+                  تماشای ویدیو
+                </Button>
+              )}
+            </Box>
+
+            {/* Queue of upcoming slides */}
+            <Box
+              role="region"
+              aria-label="اسلایدهای بعدی"
+              onMouseEnter={() => setPaused(true)}
+              onMouseLeave={() => setPaused(false)}
+              onFocus={() => setPaused(true)}
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget))
+                  setPaused(false);
+              }}
+              sx={{ mt: { xs: 4, md: 5 }, maxWidth: 520 }}
+            >
+              <Box
+                ref={trackRef}
+                dir="rtl"
+                onPointerDown={(event) => {
+                  if (event.pointerType === "mouse" || !event.isPrimary) return;
+                  suppressClickRef.current = false;
+                  swipeRef.current = {
+                    id: event.pointerId,
+                    x: event.clientX,
+                    y: event.clientY,
+                  };
+                  setTouching(true);
+                }}
+                onPointerMove={(event) => {
+                  const start = swipeRef.current;
+                  if (!start || start.id !== event.pointerId) return;
+                  const dx = event.clientX - start.x;
+                  const dy = event.clientY - start.y;
+                  if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) {
+                    suppressClickRef.current = true;
+                    event.currentTarget.setPointerCapture(event.pointerId);
+                  }
+                }}
+                onPointerUp={(event) => {
+                  const start = swipeRef.current;
+                  if (!start || start.id !== event.pointerId) return;
+                  const dx = event.clientX - start.x;
+                  const dy = event.clientY - start.y;
+                  if (Math.abs(dx) >= 40 && Math.abs(dx) > Math.abs(dy)) {
+                    suppressClickRef.current = true;
+                    // RTL: the queue slides rightwards when moving forward
+                    go((activeRef.current + (dx > 0 ? 1 : -1) + N) % N);
+                  }
+                  swipeRef.current = null;
+                  setTouching(false);
+                }}
+                onPointerCancel={() => {
+                  swipeRef.current = null;
+                  setTouching(false);
+                }}
+                onClickCapture={(event) => {
+                  if (suppressClickRef.current) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    suppressClickRef.current = false;
+                  }
+                }}
+                sx={{
+                  display: "flex",
+                  gap: "12px",
+                  overflow: "hidden",
+                  py: 1,
+                  touchAction: "pan-y pinch-zoom",
+                  userSelect: "none",
+                }}
+              >
+                {queue.map((index, slot) => {
+                  const slide = slides[index];
+                  const visible = slot < VISIBLE_CARDS;
+                  return (
+                    <Box
+                      key={slide.image}
+                      ref={(el) => (cardRefs.current[index] = el)}
+                      data-flip-id={slide.image}
+                      component="button"
+                      type="button"
+                      aria-label={`نمایش ${slide.name}`}
+                      aria-hidden={!visible}
+                      tabIndex={visible ? 0 : -1}
+                      onClick={() => go(index)}
+                      sx={{
+                        position: "relative",
+                        flex: "0 0 calc((100% - 24px) / 3)",
+                        aspectRatio: "1 / 1.05",
+                        p: 0,
+                        border: 0,
+                        overflow: "hidden",
+                        cursor: "pointer",
+                        borderRadius: "22px",
+                        bgcolor: "#dfe5ef",
+                        boxShadow: "0 8px 22px rgba(15,25,60,.14)",
+                        "&:focus-visible": {
+                          outline: `2px solid ${T.accent}`,
+                          outlineOffset: 3,
+                        },
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        draggable={false}
+                        src={
+                          slide.poster ||
+                          `/media/hero/${slide.image}-thumb.webp`
+                        }
+                        alt={slide.name}
+                        sx={{
+                          display: "block",
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                      {slide.video && (
+                        <Box
+                          component="span"
+                          aria-hidden="true"
+                          sx={{
+                            position: "absolute",
+                            insetInlineStart: 10,
+                            bottom: 10,
+                            width: 28,
+                            height: 28,
+                            borderRadius: "50%",
+                            bgcolor: "rgba(255,255,255,.92)",
+                            display: "grid",
+                            placeItems: "center",
+                            color: T.accent,
+                            fontSize: 11,
+                          }}
+                        >
+                          ▶
+                        </Box>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* The card that flies into the image frame */}
       <Box
         ref={cloneRef}
         aria-hidden="true"
         sx={{
           display: "none",
           position: "absolute",
+          zIndex: 3,
           overflow: "hidden",
           pointerEvents: "none",
-          boxShadow: "0 24px 60px rgba(0,0,0,.35)",
+          boxShadow: "0 24px 60px rgba(15,25,60,.28)",
           willChange: "left, top, width, height",
         }}
       >
@@ -391,344 +731,6 @@ export function HeroSection() {
             willChange: "transform",
           }}
         />
-      </Box>
-
-      <Box
-        sx={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: "70%",
-          pointerEvents: "none",
-          background:
-            "linear-gradient(to top, rgba(8,12,18,.82) 0%, rgba(8,12,18,.45) 45%, rgba(8,12,18,0) 100%)",
-        }}
-      />
-
-      <Box
-        sx={{
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-          gap: 3,
-          color: "white",
-          textAlign: "right",
-          width: "100%",
-          minHeight: "55dvh",
-          p: 3,
-          pt: 6,
-          pb: "calc(32px + env(safe-area-inset-bottom, 0px))",
-          zIndex: 2,
-        }}
-      >
-        <Box ref={textRef} dir="rtl">
-          <Box
-            aria-hidden="true"
-            data-hero-line=""
-            sx={{
-              width: 32,
-              height: 2,
-              mb: 2.5,
-              bgcolor: "white",
-              borderRadius: "1px",
-              transformOrigin: "right center",
-            }}
-          />
-          <Box
-            sx={{ overflow: "hidden", pb: "0.25em", mb: 1.5, maxWidth: 560 }}
-          >
-            <Typography
-              variant="h4"
-              data-hero-title=""
-              sx={{
-                fontSize: { xs: "1.7rem", sm: "2.4rem" },
-                fontWeight: 600,
-                lineHeight: 1.6,
-                willChange: "transform",
-              }}
-            >
-              {currentSlide.title}
-            </Typography>
-          </Box>
-          <Typography
-            variant="subtitle2"
-            data-hero-fade=""
-            sx={{
-              color: "rgba(255,255,255,.78)",
-              textAlign: "right",
-              fontSize: "0.85rem",
-              lineHeight: 2.1,
-              maxWidth: 440,
-            }}
-          >
-            {currentSlide.description}
-          </Typography>
-          {currentSlide.fullVideo && (
-            <Button
-              variant="outlined"
-              data-hero-fade=""
-              onClick={() => setVideoOpen(true)}
-              sx={{
-                mt: 2,
-                px: 2,
-                py: 1,
-                gap: 1.5,
-                color: "white",
-                borderColor: "rgba(255,255,255,.5)",
-                borderRadius: "999px",
-                "&:hover": {
-                  borderColor: "white",
-                  bgcolor: "rgba(255,255,255,.1)",
-                },
-              }}
-            >
-              <Box
-                component="span"
-                aria-hidden="true"
-                sx={{
-                  width: 0,
-                  height: 0,
-                  borderTop: "5px solid transparent",
-                  borderBottom: "5px solid transparent",
-                  borderLeft: "8px solid currentColor",
-                }}
-              />
-              تماشای ویدیو
-            </Button>
-          )}
-        </Box>
-
-        {/* Queue of upcoming slides */}
-        <Box
-          role="region"
-          aria-label="اسلایدر تصاویر محصولات"
-          aria-roledescription="carousel"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-          onFocus={() => setPaused(true)}
-          onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget))
-              setPaused(false);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
-              event.preventDefault();
-              go(
-                (activeRef.current +
-                  (event.key === "ArrowRight" ? 1 : -1) +
-                  N) %
-                  N,
-              );
-            }
-          }}
-          sx={{
-            alignSelf: "flex-end",
-            flexShrink: 0,
-            width: "min(100%, 320px)",
-          }}
-        >
-          <Box
-            ref={trackRef}
-            onPointerDown={(event) => {
-              if (event.pointerType === "mouse" || !event.isPrimary) return;
-              suppressClickRef.current = false;
-              swipeRef.current = {
-                id: event.pointerId,
-                x: event.clientX,
-                y: event.clientY,
-              };
-              setTouching(true);
-            }}
-            onPointerMove={(event) => {
-              const start = swipeRef.current;
-              if (!start || start.id !== event.pointerId) return;
-              const dx = event.clientX - start.x;
-              const dy = event.clientY - start.y;
-              if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy)) {
-                suppressClickRef.current = true;
-                event.currentTarget.setPointerCapture(event.pointerId);
-              }
-            }}
-            onPointerUp={(event) => {
-              const start = swipeRef.current;
-              if (!start || start.id !== event.pointerId) return;
-              const dx = event.clientX - start.x;
-              const dy = event.clientY - start.y;
-              if (Math.abs(dx) >= 40 && Math.abs(dx) > Math.abs(dy)) {
-                suppressClickRef.current = true;
-                go((activeRef.current + (dx < 0 ? 1 : -1) + N) % N);
-              }
-              swipeRef.current = null;
-              setTouching(false);
-            }}
-            onPointerCancel={() => {
-              swipeRef.current = null;
-              setTouching(false);
-            }}
-            onClickCapture={(event) => {
-              if (suppressClickRef.current) {
-                event.preventDefault();
-                event.stopPropagation();
-                suppressClickRef.current = false;
-              }
-            }}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: "5%",
-              overflow: "hidden",
-              height: 92,
-              direction: "ltr",
-              touchAction: "pan-y pinch-zoom",
-              userSelect: "none",
-            }}
-          >
-            {queue.map((index, slot) => {
-              const slide = slides[index];
-              const visible = slot < VISIBLE_CARDS;
-              return (
-                <Box
-                  key={slide.image}
-                  ref={(el) => (cardRefs.current[index] = el)}
-                  data-flip-id={slide.image}
-                  component="button"
-                  type="button"
-                  aria-label={`نمایش ${slide.name}`}
-                  aria-hidden={!visible}
-                  tabIndex={visible ? 0 : -1}
-                  onClick={() => go(index)}
-                  sx={{
-                    position: "relative",
-                    flex: "0 0 29%",
-                    height: 84,
-                    p: 0,
-                    overflow: "hidden",
-                    cursor: "pointer",
-                    borderRadius: "12px",
-                    border: 0,
-                    bgcolor: "rgba(255,255,255,.1)",
-                    boxShadow: "0 6px 18px rgba(0,0,0,.25)",
-                    filter: "brightness(.88)",
-                    "&:hover": { filter: "brightness(1)" },
-                    "&:focus-visible": {
-                      outline: "2px solid white",
-                      outlineOffset: 4,
-                    },
-                  }}
-                >
-                  <Box
-                    component="img"
-                    draggable={false}
-                    src={
-                      slide.poster || `/media/hero/${slide.image}-thumb.webp`
-                    }
-                    alt={slide.name}
-                    sx={{
-                      display: "block",
-                      width: "100%",
-                      height: "100%",
-                      objectFit: "cover",
-                    }}
-                  />
-                  {slide.video && (
-                    <Box
-                      component="span"
-                      aria-hidden="true"
-                      sx={{
-                        position: "absolute",
-                        inset: 0,
-                        display: "grid",
-                        placeItems: "center",
-                        color: "white",
-                        fontSize: 14,
-                        background: "rgba(0,0,0,.28)",
-                      }}
-                    >
-                      ▶
-                    </Box>
-                  )}
-                </Box>
-              );
-            })}
-          </Box>
-
-          {/* Dots: the active one is the timer progress */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              direction: "ltr",
-              mt: 0.5,
-            }}
-          >
-            <Box sx={{ display: "flex" }}>
-              {slides.map((slide, index) => {
-                const active = activeSlide === index;
-                return (
-                  <Box
-                    key={slide.image}
-                    component="button"
-                    type="button"
-                    aria-label={`انتخاب ${slide.name}`}
-                    aria-pressed={active}
-                    onClick={() => go(index)}
-                    sx={{
-                      border: 0,
-                      p: "10px 3px",
-                      bgcolor: "transparent",
-                      cursor: "pointer",
-                      "&:focus-visible": {
-                        outline: "2px solid white",
-                        borderRadius: 1,
-                      },
-                    }}
-                  >
-                    <Box
-                      component="span"
-                      sx={{
-                        position: "relative",
-                        display: "block",
-                        overflow: "hidden",
-                        height: 2,
-                        borderRadius: 10,
-                        width: active ? 32 : 10,
-                        bgcolor: "rgba(255,255,255,.3)",
-                        transition: reduceMotion ? "none" : "width 300ms ease",
-                      }}
-                    >
-                      {active && (
-                        <Box
-                          component="span"
-                          ref={(el) => (fillRefs.current[index] = el)}
-                          sx={{
-                            position: "absolute",
-                            inset: 0,
-                            bgcolor: "white",
-                            transformOrigin: "left center",
-                          }}
-                        />
-                      )}
-                    </Box>
-                  </Box>
-                );
-              })}
-            </Box>
-            <Typography
-              aria-hidden="true"
-              sx={{
-                fontSize: 12,
-                letterSpacing: ".08em",
-                color: "rgba(255,255,255,.7)",
-                fontVariantNumeric: "tabular-nums",
-              }}
-            >
-              {fa(activeSlide + 1)} / {fa(N)}
-            </Typography>
-          </Box>
-        </Box>
       </Box>
 
       <Dialog
