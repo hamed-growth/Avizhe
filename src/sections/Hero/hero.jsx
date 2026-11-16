@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import gsap from "gsap"; // npm i gsap  (core only, no plugin needed)
+import gsap from "gsap";
 import { Box, Button, Dialog, Typography, useMediaQuery } from "@mui/material";
 
 /* ---------- Config ---------- */
@@ -56,6 +56,7 @@ export function HeroSection() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [bgSlide, setBgSlide] = useState(0);
   const [opening, setOpening] = useState(null); // index of the card being opened
+  const [transitioning, setTransitioning] = useState(false);
   const [paused, setPaused] = useState(false);
   const [touching, setTouching] = useState(false);
   const [videoOpen, setVideoOpen] = useState(false);
@@ -77,6 +78,7 @@ export function HeroSection() {
   const tlRef = useRef(null);
   const progressRef = useRef(null);
   const goRef = useRef(() => {});
+  const frameRef = useRef(null);
 
   const commit = (index) => {
     activeRef.current = index;
@@ -87,7 +89,7 @@ export function HeroSection() {
   const go = (target) => {
     const from = activeRef.current;
     const root = rootRef.current;
-    if (!root || busyRef.current || target === from) return;
+    if (!root || busyRef.current || videoOpen || target === from) return;
 
     if (reduceMotion) {
       commit(target);
@@ -96,6 +98,7 @@ export function HeroSection() {
     }
 
     busyRef.current = true;
+    setTransitioning(true);
 
     // The card that visually "opens": the neighbour if visible, else the active one.
     const pos = (target - from + N) % N;
@@ -124,12 +127,13 @@ export function HeroSection() {
       .timeline({
         onComplete: () => {
           setBgSlide(target); // real background takes over under the clone...
-          requestAnimationFrame(() =>
-            requestAnimationFrame(() => {
+          frameRef.current = requestAnimationFrame(() => {
+            frameRef.current = requestAnimationFrame(() => {
               gsap.set(clone, { display: "none" }); // ...then the clone leaves
               busyRef.current = false;
-            }),
-          );
+              setTransitioning(false);
+            });
+          });
         },
       })
       // old text leaves
@@ -173,6 +177,17 @@ export function HeroSection() {
       }, SWAP_AT);
   };
   goRef.current = go;
+
+  useIsoLayoutEffect(() => {
+    if (!reduceMotion || !busyRef.current) return;
+    tlRef.current?.kill();
+    cancelAnimationFrame(frameRef.current);
+    gsap.set(cloneRef.current, { display: "none" });
+    setBgSlide(activeRef.current);
+    setOpening(null);
+    busyRef.current = false;
+    setTransitioning(false);
+  }, [reduceMotion]);
 
   /* ---------- New text enters (mask reveal, no per-letter split: Persian joins letters) ---------- */
   useIsoLayoutEffect(() => {
@@ -225,7 +240,10 @@ export function HeroSection() {
       },
     );
     progressRef.current = tween;
-    return () => tween.kill();
+    return () => {
+      tween.kill();
+      progressRef.current = null;
+    };
   }, [activeSlide, reduceMotion, videoOpen]);
 
   useEffect(() => {
@@ -242,7 +260,14 @@ export function HeroSection() {
     let lastTs = 0;
     let locked = false;
     const onWheel = (e) => {
+      if (e.ctrlKey) return;
       if (Math.abs(e.deltaY) < 8 || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      const bounds = el.getBoundingClientRect();
+      if (
+        bounds.top < -1 ||
+        bounds.bottom < window.innerHeight - 1 ||
+        bounds.height > window.innerHeight + 1
+      ) return;
       const next = activeRef.current + (e.deltaY > 0 ? 1 : -1);
       // at the first/last slide let the page scroll normally
       if (next < 0 || next >= N) return;
@@ -278,6 +303,7 @@ export function HeroSection() {
     () => () => {
       tlRef.current?.kill();
       progressRef.current?.kill();
+      cancelAnimationFrame(frameRef.current);
     },
     [],
   );
@@ -431,6 +457,7 @@ export function HeroSection() {
             <Button
               variant="outlined"
               data-hero-fade=""
+              disabled={transitioning}
               onClick={() => setVideoOpen(true)}
               sx={{
                 mt: 2,
@@ -549,7 +576,9 @@ export function HeroSection() {
               return (
                 <Box
                   key={slide.image}
-                  ref={(el) => (cardRefs.current[index] = el)}
+                  ref={(el) => {
+                    cardRefs.current[index] = el;
+                  }}
                   component="button"
                   type="button"
                   aria-label={`نمایش ${slide.name}`}
@@ -668,7 +697,9 @@ export function HeroSection() {
                     {active && (
                       <Box
                         component="span"
-                        ref={(el) => (fillRefs.current[index] = el)}
+                        ref={(el) => {
+                          fillRefs.current[index] = el;
+                        }}
                         sx={{
                           position: "absolute",
                           inset: 0,
