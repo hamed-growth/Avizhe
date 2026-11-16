@@ -700,10 +700,7 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
                   sx={{
                     position: "relative",
                     flex: "0 0 calc((100% - 24px) / 3)",
-                    height: {
-                      xs: "clamp(60px, 10svh, 92px)",
-                      md: "clamp(84px, 14svh, 120px)",
-                    },
+                    aspectRatio: "1.1 / 1",
                     p: 0,
                     border: 0,
                     overflow: "hidden",
