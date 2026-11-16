@@ -1,56 +1,311 @@
-import { useEffect, useRef, useState } from "react";
-import { Box, Typography, useMediaQuery } from "@mui/material";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import gsap from "gsap"; // npm i gsap  (core only, no plugin needed)
+import { Box, Button, Dialog, Typography, useMediaQuery } from "@mui/material";
+
+/* ---------- Config ---------- */
+const SLIDE_SECONDS = 5; // time before auto-advance (the "timed" part)
+const OPEN_SECONDS = 1.05; // card -> fullscreen duration
+const SWAP_AT = 0.55; // when text + thumbnails switch to the new slide
+const WHEEL_GAP_MS = 120; // silence needed between two wheel gestures
+const CARD_EASE = "cubic-bezier(.22,1,.36,1)";
+const REVEAL = "[data-hero-line],[data-hero-title],[data-hero-fade]";
+
+const useIsoLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 const slides = [
-  { name: "صنعت", image: "industry" },
-  { name: "پراکسیدها", image: "peroxides" },
-  { name: "رزین‌ها", image: "resins" },
+  {
+    name: "صنعت",
+    image: "industry",
+    title: "همراه صنعت، از انتخاب تا تأمین",
+    description:
+      "برای انتخاب مواد اولیه متناسب با نیاز تولیدتان، در کنار شما هستیم. با آویژه، مسیر تأمین را آگاهانه‌تر پیش ببرید.",
+  },
+  {
+    name: "پراکسیدها",
+    image: "peroxides",
+    title: "انتخاب دقیق پراکسیدها برای تولید شما",
+    description:
+      "پراکسید مناسب را با توجه به کاربرد و شرایط فرایند خود انتخاب کنید. آویژه در بررسی گزینه‌ها و تأمین محصول همراه شماست.",
+  },
+  {
+    name: "رزین‌ها",
+    image: "resins",
+    title: "رزین متناسب با ایده و کاربرد شما",
+    description:
+      "هر محصول از انتخاب مواد اولیه آغاز می‌شود. برای شناخت و تأمین رزین متناسب با نیاز صنعت خود، با آویژه همراه شوید.",
+  },
   {
     name: "ویدیوی معرفی",
     image: "video",
     video: "/media/videos/hero-preview.mp4",
     poster: "/media/posters/hero-preview.jpg",
+    fullVideo: "/media/videos/hero.mp4",
+    title: "آویژه را از نزدیک ببینید",
+    description:
+      "با تماشای ویدیوی معرفی، بیشتر با آویژه و مسیر همراهی ما با صنعت آشنا شوید.",
   },
 ];
 
+const N = slides.length;
+const fullImage = (s) => s.poster || `/media/hero/${s.image}.webp`;
+
 export function HeroSection() {
+  // activeSlide: drives text, thumbnails, dots (switches mid-transition)
+  // bgSlide: drives the fullscreen background (switches when the card finished opening)
   const [activeSlide, setActiveSlide] = useState(0);
+  const [bgSlide, setBgSlide] = useState(0);
+  const [opening, setOpening] = useState(null); // index of the card being opened
   const [paused, setPaused] = useState(false);
+  const [touching, setTouching] = useState(false);
+  const [videoOpen, setVideoOpen] = useState(false);
+  const currentSlide = slides[activeSlide];
   const reduceMotion = useMediaQuery("(prefers-reduced-motion: reduce)");
+
+  const rootRef = useRef(null);
+  const textRef = useRef(null);
+  const cloneRef = useRef(null);
+  const cloneImgRef = useRef(null);
+  const cardRefs = useRef([]);
+  const fillRefs = useRef([]);
   const videoRef = useRef(null);
   const swipeRef = useRef(null);
   const suppressClickRef = useRef(false);
-  const [touching, setTouching] = useState(false);
 
+  const activeRef = useRef(0);
+  const busyRef = useRef(false);
+  const tlRef = useRef(null);
+  const progressRef = useRef(null);
+  const goRef = useRef(() => {});
+
+  const commit = (index) => {
+    activeRef.current = index;
+    setActiveSlide(index);
+  };
+
+  /* ---------- Core: open the target card to fullscreen ---------- */
+  const go = (target) => {
+    const from = activeRef.current;
+    const root = rootRef.current;
+    if (!root || busyRef.current || target === from) return;
+
+    if (reduceMotion) {
+      commit(target);
+      setBgSlide(target);
+      return;
+    }
+
+    busyRef.current = true;
+
+    // The card that visually "opens": the neighbour if visible, else the active one.
+    const pos = (target - from + N) % N;
+    const near = pos === 1 || pos === N - 1;
+    const originEl = cardRefs.current[near ? target : from];
+    const rootRect = root.getBoundingClientRect();
+    const r = originEl.getBoundingClientRect();
+
+    const clone = cloneRef.current;
+    const cloneImg = cloneImgRef.current;
+    cloneImg.src = fullImage(slides[target]);
+
+    gsap.set(clone, {
+      display: "block",
+      left: r.left - rootRect.left,
+      top: r.top - rootRect.top,
+      width: r.width,
+      height: r.height,
+      borderRadius: near ? 14 : 20,
+    });
+    setOpening(near ? target : null);
+
+    const textEls = gsap.utils.toArray(REVEAL, textRef.current);
+
+    tlRef.current = gsap
+      .timeline({
+        onComplete: () => {
+          setBgSlide(target); // real background takes over under the clone...
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              gsap.set(clone, { display: "none" }); // ...then the clone leaves
+              busyRef.current = false;
+            }),
+          );
+        },
+      })
+      // old text leaves
+      .to(
+        textEls,
+        {
+          opacity: 0,
+          y: -14,
+          filter: "blur(6px)",
+          duration: 0.35,
+          stagger: 0.04,
+          ease: "power2.in",
+        },
+        0,
+      )
+      // card grows to the full hero
+      .to(
+        clone,
+        {
+          left: 0,
+          top: 0,
+          width: rootRect.width,
+          height: rootRect.height,
+          borderRadius: 0,
+          duration: OPEN_SECONDS,
+          ease: "power3.inOut",
+        },
+        0,
+      )
+      // image settles inside the growing card
+      .fromTo(
+        cloneImg,
+        { scale: 1.12 },
+        { scale: 1, duration: OPEN_SECONDS + 0.25, ease: "power3.out" },
+        0,
+      )
+      // switch text / thumbnails / dots while the card is almost open
+      .add(() => {
+        setOpening(null);
+        commit(target);
+      }, SWAP_AT);
+  };
+  goRef.current = go;
+
+  /* ---------- New text enters (mask reveal, no per-letter split: Persian joins letters) ---------- */
+  useIsoLayoutEffect(() => {
+    if (!textRef.current) return;
+    if (reduceMotion) {
+      gsap.set(gsap.utils.toArray(REVEAL, textRef.current), { clearProps: "all" });
+      return;
+    }
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        "[data-hero-line]",
+        { opacity: 0, scaleX: 0.4, y: 0, filter: "none" },
+        { opacity: 1, scaleX: 1, duration: 0.6, ease: "power3.out" },
+      );
+      gsap.fromTo(
+        "[data-hero-title]",
+        { yPercent: 110, opacity: 1, y: 0, filter: "none" },
+        { yPercent: 0, duration: 0.85, ease: "power4.out", delay: 0.08 },
+      );
+      gsap.fromTo(
+        "[data-hero-fade]",
+        { opacity: 0, y: 18, filter: "blur(4px)" },
+        {
+          opacity: 1,
+          y: 0,
+          filter: "blur(0px)",
+          duration: 0.7,
+          ease: "power3.out",
+          stagger: 0.08,
+          delay: 0.18,
+        },
+      );
+    }, textRef);
+    return () => ctx.revert();
+  }, [activeSlide, reduceMotion]);
+
+  /* ---------- Timed auto-advance: the active dot fills over SLIDE_SECONDS ---------- */
+  useEffect(() => {
+    if (reduceMotion || videoOpen) return;
+    const fill = fillRefs.current[activeSlide];
+    if (!fill) return;
+    const tween = gsap.fromTo(
+      fill,
+      { scaleX: 0 },
+      {
+        scaleX: 1,
+        duration: SLIDE_SECONDS,
+        ease: "none",
+        onComplete: () => goRef.current((activeRef.current + 1) % N),
+      },
+    );
+    progressRef.current = tween;
+    return () => tween.kill();
+  }, [activeSlide, reduceMotion, videoOpen]);
+
+  useEffect(() => {
+    const tween = progressRef.current;
+    if (!tween) return;
+    if (paused || touching) tween.pause();
+    else tween.resume();
+  }, [paused, touching, activeSlide, reduceMotion, videoOpen]);
+
+  /* ---------- Scroll (wheel) = next / previous slide ---------- */
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el || videoOpen) return;
+    let lastTs = 0;
+    let locked = false;
+    const onWheel = (e) => {
+      if (Math.abs(e.deltaY) < 8 || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+      const next = activeRef.current + (e.deltaY > 0 ? 1 : -1);
+      // at the first/last slide let the page scroll normally
+      if (next < 0 || next >= N) return;
+      e.preventDefault();
+      const now = performance.now();
+      const gap = now - lastTs;
+      lastTs = now;
+      if (busyRef.current) {
+        locked = true;
+        return;
+      }
+      if (locked && gap < WHEEL_GAP_MS) return; // same trackpad gesture / inertia
+      locked = true;
+      goRef.current(next);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [videoOpen]);
+
+  /* ---------- Video background ---------- */
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (slides[activeSlide].video && !reduceMotion) {
+    if (slides[bgSlide].video && !reduceMotion && !videoOpen) {
       video.play().catch(() => {});
     } else {
       video.pause();
       video.currentTime = 0;
     }
-  }, [activeSlide, reduceMotion]);
+  }, [bgSlide, reduceMotion, videoOpen]);
 
-  useEffect(() => {
-    if (paused || touching || reduceMotion) return;
-    const timer = window.setTimeout(() => {
-      setActiveSlide((current) => (current + 1) % slides.length);
-    }, 5000);
-    return () => window.clearTimeout(timer);
-  }, [activeSlide, paused, touching, reduceMotion]);
+  useEffect(
+    () => () => {
+      tlRef.current?.kill();
+      progressRef.current?.kill();
+    },
+    [],
+  );
 
   return (
     <Box
+      ref={rootRef}
       sx={{
         backgroundColor: "#c3c3c3",
-        height: "100dvh",
+        minHeight: "100dvh",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-end",
         position: "relative",
         overflow: "hidden",
-        minHeight: 560,
+
+        "&:before": {
+          content: '""',
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          zIndex: 1,
+          boxShadow: "inset -100px -62px 100px -18px rgba(32,36,42,0.58)",
+        },
       }}
     >
+      {/* Fullscreen backgrounds (the opening card hides the swap, so no crossfade) */}
       {slides.map((slide, index) => (
         <Box
           key={slide.image}
@@ -75,12 +330,38 @@ export function HeroSection() {
             height: "100%",
             objectFit: "cover",
             borderRadius: "3px",
-            opacity: activeSlide === index ? 1 : 0,
+            opacity: bgSlide === index ? 1 : 0,
             pointerEvents: "none",
-            transition: reduceMotion ? "none" : "opacity 800ms ease",
           }}
         />
       ))}
+
+      {/* The card that grows into the new background (animated by GSAP) */}
+      <Box
+        ref={cloneRef}
+        aria-hidden="true"
+        sx={{
+          display: "none",
+          position: "absolute",
+          overflow: "hidden",
+          pointerEvents: "none",
+          boxShadow: "0 24px 60px rgba(0,0,0,.35)",
+          willChange: "left, top, width, height",
+        }}
+      >
+        <Box
+          component="img"
+          ref={cloneImgRef}
+          alt=""
+          sx={{
+            display: "block",
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            willChange: "transform",
+          }}
+        />
+      </Box>
 
       <Box
         sx={{
@@ -98,40 +379,90 @@ export function HeroSection() {
           WebkitMaskImage:
             "linear-gradient(to top, #000 0%, #000 50% , #00000063 100%)",
         }}
-      ></Box>
+      />
 
       <Box
         sx={{
-          position: "absolute",
-          bottom: 0,
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          gap: 3,
           color: "white",
           textAlign: "right",
           width: "100%",
-          height: "55%",
+          minHeight: "55dvh",
           p: 3,
           pt: 6,
+          pb: "calc(32px + env(safe-area-inset-bottom, 0px))",
+          zIndex: 2,
         }}
       >
-        <Typography
-          variant="h4"
-          sx={{
-            mb: 2,
-          }}
-        >
-          بهترین فروش خاورمیانه
-        </Typography>
-        <Typography
-          variant="subtitle2"
-          sx={{
-            color: "#f6f6f6",
-            textAlign: "right",
-            pl: { xs: 0, sm: 10 },
-          }}
-        >
-          ما به شما کمک می‌کنیم تا بهترین محصولات را با کیفیت بالا و قیمت مناسب
-          پیدا کنید. این تصمیم با شماست که با ماباشید تا خدمات بیشتر دریافت کنید
-        </Typography>
-        {/* Image Slider */}
+        <Box ref={textRef} dir="rtl">
+          <Box
+            aria-hidden="true"
+            data-hero-line=""
+            sx={{
+              width: 56,
+              height: 4,
+              mb: 2,
+              bgcolor: "white",
+              borderRadius: "1px",
+              transformOrigin: "right center",
+            }}
+          />
+          <Box sx={{ overflow: "hidden", pb: "0.2em", mb: 1.8 }}>
+            <Typography variant="h4" data-hero-title="" sx={{ willChange: "transform" }}>
+              {currentSlide.title}
+            </Typography>
+          </Box>
+          <Typography
+            variant="subtitle2"
+            data-hero-fade=""
+            sx={{
+              color: "#f6f6f6",
+              textAlign: "right",
+              pl: { xs: 0, sm: 10 },
+            }}
+          >
+            {currentSlide.description}
+          </Typography>
+          {currentSlide.fullVideo && (
+            <Button
+              variant="outlined"
+              data-hero-fade=""
+              onClick={() => setVideoOpen(true)}
+              sx={{
+                mt: 2,
+                px: 2,
+                py: 1,
+                gap: 1.5,
+                color: "white",
+                borderColor: "rgba(255,255,255,.5)",
+                borderRadius: "999px",
+                "&:hover": {
+                  borderColor: "white",
+                  bgcolor: "rgba(255,255,255,.1)",
+                },
+              }}
+            >
+              <Box
+                component="span"
+                aria-hidden="true"
+                sx={{
+                  width: 0,
+                  height: 0,
+                  borderTop: "5px solid transparent",
+                  borderBottom: "5px solid transparent",
+                  borderLeft: "8px solid currentColor",
+                }}
+              />
+              تماشای ویدیو
+            </Button>
+          )}
+        </Box>
+
+        {/* Card slider */}
         <Box
           role="region"
           aria-label="اسلایدر تصاویر محصولات"
@@ -146,16 +477,15 @@ export function HeroSection() {
           onKeyDown={(event) => {
             if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
               event.preventDefault();
-              setActiveSlide(
-                (current) =>
-                  (current +
-                    (event.key === "ArrowRight" ? 1 : -1) +
-                    slides.length) %
-                  slides.length,
+              go(
+                (activeRef.current +
+                  (event.key === "ArrowRight" ? 1 : -1) +
+                  N) %
+                  N,
               );
             }
           }}
-          sx={{ mt: { xs: 5, sm: 10 }, ml: "auto", width: "min(100%, 440px)" }}
+          sx={{ alignSelf: "flex-end", flexShrink: 0, width: "min(100%, 440px)" }}
         >
           <Box
             onPointerDown={(event) => {
@@ -185,11 +515,7 @@ export function HeroSection() {
               const dy = event.clientY - start.y;
               if (Math.abs(dx) >= 40 && Math.abs(dx) > Math.abs(dy)) {
                 suppressClickRef.current = true;
-                setActiveSlide(
-                  (current) =>
-                    (current + (dx < 0 ? 1 : -1) + slides.length) %
-                    slides.length,
-                );
+                go((activeRef.current + (dx < 0 ? 1 : -1) + N) % N);
               }
               swipeRef.current = null;
               setTouching(false);
@@ -216,20 +542,21 @@ export function HeroSection() {
           >
             {slides.map((slide, index) => {
               const selected = activeSlide === index;
-              const offset =
-                (index - activeSlide + slides.length) % slides.length;
-              const position = offset === slides.length - 1 ? -1 : offset;
+              const offset = (index - activeSlide + N) % N;
+              const position = offset === N - 1 ? -1 : offset;
               const visible = Math.abs(position) <= 1;
+              const isOpening = opening === index;
               return (
                 <Box
                   key={slide.image}
+                  ref={(el) => (cardRefs.current[index] = el)}
                   component="button"
                   type="button"
                   aria-label={`نمایش ${slide.name}`}
                   aria-pressed={selected}
                   aria-hidden={!visible}
                   tabIndex={visible ? 0 : -1}
-                  onClick={() => setActiveSlide(index)}
+                  onClick={() => go(index)}
                   sx={{
                     position: "absolute",
                     top: "50%",
@@ -246,15 +573,15 @@ export function HeroSection() {
                     borderColor: selected
                       ? "rgba(255,255,255,.85)"
                       : "rgba(255,255,255,.18)",
-                    opacity: visible ? (selected ? 1 : 0.65) : 0,
+                    opacity: isOpening ? 0 : visible ? (selected ? 1 : 0.65) : 0,
                     visibility: visible ? "visible" : "hidden",
                     pointerEvents: visible ? "auto" : "none",
                     bgcolor: "rgba(255,255,255,.1)",
                     boxShadow: selected ? "0 8px 28px rgba(0,0,0,.2)" : "none",
                     transition: reduceMotion
                       ? "none"
-                      : "all 550ms cubic-bezier(.22,1,.36,1)",
-                    "&:hover": { opacity: 1 },
+                      : `left 550ms ${CARD_EASE}, width 550ms ${CARD_EASE}, height 550ms ${CARD_EASE}, border-radius 550ms ${CARD_EASE}, border-color 550ms ease, box-shadow 550ms ease, opacity 250ms ease`,
+                    "&:hover": { opacity: isOpening ? 0 : 1 },
                     "&:focus-visible": {
                       outline: "2px solid white",
                       outlineOffset: 4,
@@ -264,9 +591,7 @@ export function HeroSection() {
                   <Box
                     component="img"
                     draggable={false}
-                    src={
-                      slide.poster || `/media/hero/${slide.image}-thumb.webp`
-                    }
+                    src={slide.poster || `/media/hero/${slide.image}-thumb.webp`}
                     alt={slide.name}
                     sx={{
                       display: "block",
@@ -296,6 +621,8 @@ export function HeroSection() {
               );
             })}
           </Box>
+
+          {/* Dots: the active one is the timer progress */}
           <Box
             sx={{
               display: "flex",
@@ -304,42 +631,87 @@ export function HeroSection() {
               mt: 1,
             }}
           >
-            {slides.map((slide, index) => (
-              <Box
-                key={slide.image}
-                component="button"
-                type="button"
-                aria-label={`انتخاب ${slide.name}`}
-                aria-pressed={activeSlide === index}
-                onClick={() => setActiveSlide(index)}
-                sx={{
-                  border: 0,
-                  p: "10px 3px",
-                  bgcolor: "transparent",
-                  cursor: "pointer",
-                  "&:focus-visible": {
-                    outline: "2px solid white",
-                    borderRadius: 1,
-                  },
-                }}
-              >
+            {slides.map((slide, index) => {
+              const active = activeSlide === index;
+              return (
                 <Box
-                  component="span"
+                  key={slide.image}
+                  component="button"
+                  type="button"
+                  aria-label={`انتخاب ${slide.name}`}
+                  aria-pressed={active}
+                  onClick={() => go(index)}
                   sx={{
-                    display: "block",
-                    height: 3,
-                    borderRadius: 10,
-                    width: activeSlide === index ? 21 : 17,
-                    bgcolor:
-                      activeSlide === index ? "white" : "rgba(255,255,255,.3)",
-                    transition: reduceMotion ? "none" : "all 300ms ease",
+                    border: 0,
+                    p: "10px 3px",
+                    bgcolor: "transparent",
+                    cursor: "pointer",
+                    "&:focus-visible": {
+                      outline: "2px solid white",
+                      borderRadius: 1,
+                    },
                   }}
-                />
-              </Box>
-            ))}
+                >
+                  <Box
+                    component="span"
+                    sx={{
+                      position: "relative",
+                      display: "block",
+                      overflow: "hidden",
+                      height: 3,
+                      borderRadius: 10,
+                      width: active ? 40 : 17,
+                      bgcolor: "rgba(255,255,255,.3)",
+                      transition: reduceMotion ? "none" : "width 300ms ease",
+                    }}
+                  >
+                    {active && (
+                      <Box
+                        component="span"
+                        ref={(el) => (fillRefs.current[index] = el)}
+                        sx={{
+                          position: "absolute",
+                          inset: 0,
+                          bgcolor: "white",
+                          transformOrigin: "left center",
+                        }}
+                      />
+                    )}
+                  </Box>
+                </Box>
+              );
+            })}
           </Box>
         </Box>
       </Box>
+
+      <Dialog
+        open={videoOpen}
+        onClose={() => setVideoOpen(false)}
+        aria-label="ویدیوی معرفی آویژه"
+        fullWidth
+        maxWidth="md"
+        slotProps={{ paper: { sx: { bgcolor: "#111", borderRadius: 2 } } }}
+      >
+        {videoOpen && (
+          <>
+            <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1 }}>
+              <Button onClick={() => setVideoOpen(false)} sx={{ color: "white" }}>
+                بستن
+              </Button>
+            </Box>
+            <Box
+              component="video"
+              src={currentSlide.fullVideo}
+              poster={currentSlide.poster}
+              controls
+              autoPlay
+              playsInline
+              sx={{ display: "block", width: "100%", maxHeight: "75dvh" }}
+            />
+          </>
+        )}
+      </Dialog>
     </Box>
   );
 }
