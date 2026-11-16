@@ -1,17 +1,18 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import gsap from "gsap";
+import { useEffect, useRef, useState } from "react";
+import gsap from "gsap"; // npm i gsap @gsap/react
+import { Flip } from "gsap/Flip";
+import { useGSAP } from "@gsap/react";
 import { Box, Button, Dialog, Typography, useMediaQuery } from "@mui/material";
 
-/* ---------- Config ---------- */
-const SLIDE_SECONDS = 5; // time before auto-advance (the "timed" part)
-const OPEN_SECONDS = 1.05; // card -> fullscreen duration
-const SWAP_AT = 0.55; // when text + thumbnails switch to the new slide
-const WHEEL_GAP_MS = 120; // silence needed between two wheel gestures
-const CARD_EASE = "cubic-bezier(.22,1,.36,1)";
-const REVEAL = "[data-hero-line],[data-hero-title],[data-hero-fade]";
+gsap.registerPlugin(useGSAP, Flip);
 
-const useIsoLayoutEffect =
-  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+/* ---------- Config ---------- */
+const SLIDE_SECONDS = 5; // auto-advance time
+const OPEN_SECONDS = 1.05; // card -> fullscreen
+const SWAP_AT = 0.55; // text + dots switch to the new slide
+const WHEEL_GAP_MS = 120; // silence needed between two wheel gestures
+const VISIBLE_CARDS = 3;
+const REVEAL = "[data-hero-line],[data-hero-title],[data-hero-fade]";
 
 const slides = [
   {
@@ -51,12 +52,12 @@ const N = slides.length;
 const fullImage = (s) => s.poster || `/media/hero/${s.image}.webp`;
 
 export function HeroSection() {
-  // activeSlide: drives text, thumbnails, dots (switches mid-transition)
-  // bgSlide: drives the fullscreen background (switches when the card finished opening)
+  // activeSlide    -> text + dots (switches mid-transition)
+  // carouselActive -> card queue (switches at the START of the transition)
+  // bgSlide        -> fullscreen background (switches when the card is fully open)
   const [activeSlide, setActiveSlide] = useState(0);
+  const [carouselActive, setCarouselActive] = useState(0);
   const [bgSlide, setBgSlide] = useState(0);
-  const [opening, setOpening] = useState(null); // index of the card being opened
-  const [transitioning, setTransitioning] = useState(false);
   const [paused, setPaused] = useState(false);
   const [touching, setTouching] = useState(false);
   const [videoOpen, setVideoOpen] = useState(false);
@@ -65,6 +66,7 @@ export function HeroSection() {
 
   const rootRef = useRef(null);
   const textRef = useRef(null);
+  const trackRef = useRef(null);
   const cloneRef = useRef(null);
   const cloneImgRef = useRef(null);
   const cardRefs = useRef([]);
@@ -75,10 +77,16 @@ export function HeroSection() {
 
   const activeRef = useRef(0);
   const busyRef = useRef(false);
+  const flipRef = useRef(null);
   const tlRef = useRef(null);
   const progressRef = useRef(null);
   const goRef = useRef(() => {});
-  const frameRef = useRef(null);
+
+  // Cards = every slide except the active one, in circular order after it.
+  const queue = Array.from(
+    { length: N - 1 },
+    (_, k) => (carouselActive + 1 + k) % N,
+  );
 
   const commit = (index) => {
     activeRef.current = index;
@@ -89,54 +97,53 @@ export function HeroSection() {
   const go = (target) => {
     const from = activeRef.current;
     const root = rootRef.current;
-    if (!root || busyRef.current || videoOpen || target === from) return;
+    if (!root || busyRef.current || target === from) return;
 
     if (reduceMotion) {
+      setCarouselActive(target);
       commit(target);
       setBgSlide(target);
       return;
     }
-
     busyRef.current = true;
-    setTransitioning(true);
 
-    // The card that visually "opens": the neighbour if visible, else the active one.
-    const pos = (target - from + N) % N;
-    const near = pos === 1 || pos === N - 1;
-    const originEl = cardRefs.current[near ? target : from];
+    // Origin rect: the target card (clamped to the track if it is off-screen).
     const rootRect = root.getBoundingClientRect();
-    const r = originEl.getBoundingClientRect();
+    const trackRect = trackRef.current.getBoundingClientRect();
+    const r = cardRefs.current[target].getBoundingClientRect();
+    const left = Math.min(r.left, trackRect.right - r.width);
+
+    // Remember where every card is now; Flip animates them after React re-orders.
+    flipRef.current = Flip.getState(root.querySelectorAll("[data-flip-id]"));
 
     const clone = cloneRef.current;
     const cloneImg = cloneImgRef.current;
     cloneImg.src = fullImage(slides[target]);
-
     gsap.set(clone, {
       display: "block",
-      left: r.left - rootRect.left,
+      left: left - rootRect.left,
       top: r.top - rootRect.top,
       width: r.width,
       height: r.height,
-      borderRadius: near ? 14 : 20,
+      borderRadius: 14,
     });
-    setOpening(near ? target : null);
+
+    // The card leaves the queue right now; the clone takes its exact place.
+    setCarouselActive(target);
 
     const textEls = gsap.utils.toArray(REVEAL, textRef.current);
-
     tlRef.current = gsap
       .timeline({
         onComplete: () => {
-          setBgSlide(target); // real background takes over under the clone...
-          frameRef.current = requestAnimationFrame(() => {
-            frameRef.current = requestAnimationFrame(() => {
-              gsap.set(clone, { display: "none" }); // ...then the clone leaves
+          setBgSlide(target);
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              gsap.set(clone, { display: "none" });
               busyRef.current = false;
-              setTransitioning(false);
-            });
-          });
+            }),
+          );
         },
       })
-      // old text leaves
       .to(
         textEls,
         {
@@ -149,7 +156,6 @@ export function HeroSection() {
         },
         0,
       )
-      // card grows to the full hero
       .to(
         clone,
         {
@@ -163,40 +169,53 @@ export function HeroSection() {
         },
         0,
       )
-      // image settles inside the growing card
       .fromTo(
         cloneImg,
         { scale: 1.12 },
         { scale: 1, duration: OPEN_SECONDS + 0.25, ease: "power3.out" },
         0,
       )
-      // switch text / thumbnails / dots while the card is almost open
-      .add(() => {
-        setOpening(null);
-        commit(target);
-      }, SWAP_AT);
+      .add(() => commit(target), SWAP_AT);
   };
   goRef.current = go;
 
-  useIsoLayoutEffect(() => {
-    if (!reduceMotion || !busyRef.current) return;
-    tlRef.current?.kill();
-    cancelAnimationFrame(frameRef.current);
-    gsap.set(cloneRef.current, { display: "none" });
-    setBgSlide(activeRef.current);
-    setOpening(null);
-    busyRef.current = false;
-    setTransitioning(false);
-  }, [reduceMotion]);
+  /* ---------- Remaining cards glide into place (Flip) ---------- */
+  useGSAP(
+    () => {
+      const state = flipRef.current;
+      if (!state) return;
+      flipRef.current = null;
+      Flip.from(state, {
+        targets: rootRef.current.querySelectorAll("[data-flip-id]"),
+        duration: 0.8,
+        ease: "power3.inOut",
+        onEnter: (els) =>
+          gsap.fromTo(
+            els,
+            { opacity: 0, scale: 0.85 },
+            {
+              opacity: 1,
+              scale: 1,
+              duration: 0.6,
+              delay: 0.25,
+              ease: "power3.out",
+            },
+          ),
+      });
+    },
+    { dependencies: [carouselActive], scope: rootRef },
+  );
 
-  /* ---------- New text enters (mask reveal, no per-letter split: Persian joins letters) ---------- */
-  useIsoLayoutEffect(() => {
-    if (!textRef.current) return;
-    if (reduceMotion) {
-      gsap.set(gsap.utils.toArray(REVEAL, textRef.current), { clearProps: "all" });
-      return;
-    }
-    const ctx = gsap.context(() => {
+  /* ---------- New text enters (mask reveal; Persian is never split per letter) ---------- */
+  useGSAP(
+    () => {
+      if (!textRef.current) return;
+      if (reduceMotion) {
+        gsap.set(gsap.utils.toArray(REVEAL, textRef.current), {
+          clearProps: "all",
+        });
+        return;
+      }
       gsap.fromTo(
         "[data-hero-line]",
         { opacity: 0, scaleX: 0.4, y: 0, filter: "none" },
@@ -220,9 +239,13 @@ export function HeroSection() {
           delay: 0.18,
         },
       );
-    }, textRef);
-    return () => ctx.revert();
-  }, [activeSlide, reduceMotion]);
+    },
+    {
+      dependencies: [activeSlide, reduceMotion],
+      scope: textRef,
+      revertOnUpdate: true,
+    },
+  );
 
   /* ---------- Timed auto-advance: the active dot fills over SLIDE_SECONDS ---------- */
   useEffect(() => {
@@ -240,10 +263,7 @@ export function HeroSection() {
       },
     );
     progressRef.current = tween;
-    return () => {
-      tween.kill();
-      progressRef.current = null;
-    };
+    return () => tween.kill();
   }, [activeSlide, reduceMotion, videoOpen]);
 
   useEffect(() => {
@@ -260,17 +280,10 @@ export function HeroSection() {
     let lastTs = 0;
     let locked = false;
     const onWheel = (e) => {
-      if (e.ctrlKey) return;
-      if (Math.abs(e.deltaY) < 8 || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
-      const bounds = el.getBoundingClientRect();
-      if (
-        bounds.top < -1 ||
-        bounds.bottom < window.innerHeight - 1 ||
-        bounds.height > window.innerHeight + 1
-      ) return;
+      if (Math.abs(e.deltaY) < 8 || Math.abs(e.deltaX) > Math.abs(e.deltaY))
+        return;
       const next = activeRef.current + (e.deltaY > 0 ? 1 : -1);
-      // at the first/last slide let the page scroll normally
-      if (next < 0 || next >= N) return;
+      if (next < 0 || next >= N) return; // first/last slide: page scrolls normally
       e.preventDefault();
       const now = performance.now();
       const gap = now - lastTs;
@@ -303,7 +316,6 @@ export function HeroSection() {
     () => () => {
       tlRef.current?.kill();
       progressRef.current?.kill();
-      cancelAnimationFrame(frameRef.current);
     },
     [],
   );
@@ -319,7 +331,6 @@ export function HeroSection() {
         justifyContent: "flex-end",
         position: "relative",
         overflow: "hidden",
-
         "&:before": {
           content: '""',
           position: "absolute",
@@ -331,7 +342,7 @@ export function HeroSection() {
         },
       }}
     >
-      {/* Fullscreen backgrounds (the opening card hides the swap, so no crossfade) */}
+      {/* Fullscreen backgrounds */}
       {slides.map((slide, index) => (
         <Box
           key={slide.image}
@@ -362,7 +373,7 @@ export function HeroSection() {
         />
       ))}
 
-      {/* The card that grows into the new background (animated by GSAP) */}
+      {/* The card that grows into the new background */}
       <Box
         ref={cloneRef}
         aria-hidden="true"
@@ -438,18 +449,18 @@ export function HeroSection() {
             }}
           />
           <Box sx={{ overflow: "hidden", pb: "0.2em", mb: 1.8 }}>
-            <Typography variant="h4" data-hero-title="" sx={{ willChange: "transform" }}>
+            <Typography
+              variant="h4"
+              data-hero-title=""
+              sx={{ willChange: "transform" }}
+            >
               {currentSlide.title}
             </Typography>
           </Box>
           <Typography
             variant="subtitle2"
             data-hero-fade=""
-            sx={{
-              color: "#f6f6f6",
-              textAlign: "right",
-              pl: { xs: 0, sm: 10 },
-            }}
+            sx={{ color: "#f6f6f6", textAlign: "right", pl: { xs: 0, sm: 10 } }}
           >
             {currentSlide.description}
           </Typography>
@@ -457,7 +468,6 @@ export function HeroSection() {
             <Button
               variant="outlined"
               data-hero-fade=""
-              disabled={transitioning}
               onClick={() => setVideoOpen(true)}
               sx={{
                 mt: 2,
@@ -489,7 +499,7 @@ export function HeroSection() {
           )}
         </Box>
 
-        {/* Card slider */}
+        {/* Queue of upcoming slides */}
         <Box
           role="region"
           aria-label="اسلایدر تصاویر محصولات"
@@ -512,9 +522,14 @@ export function HeroSection() {
               );
             }
           }}
-          sx={{ alignSelf: "flex-end", flexShrink: 0, width: "min(100%, 440px)" }}
+          sx={{
+            alignSelf: "flex-end",
+            flexShrink: 0,
+            width: "min(100%, 440px)",
+          }}
         >
           <Box
+            ref={trackRef}
             onPointerDown={(event) => {
               if (event.pointerType === "mouse" || !event.isPrimary) return;
               suppressClickRef.current = false;
@@ -559,7 +574,9 @@ export function HeroSection() {
               }
             }}
             sx={{
-              position: "relative",
+              display: "flex",
+              alignItems: "center",
+              gap: "5%",
               overflow: "hidden",
               height: 108,
               direction: "ltr",
@@ -567,50 +584,32 @@ export function HeroSection() {
               userSelect: "none",
             }}
           >
-            {slides.map((slide, index) => {
-              const selected = activeSlide === index;
-              const offset = (index - activeSlide + N) % N;
-              const position = offset === N - 1 ? -1 : offset;
-              const visible = Math.abs(position) <= 1;
-              const isOpening = opening === index;
+            {queue.map((index, slot) => {
+              const slide = slides[index];
+              const visible = slot < VISIBLE_CARDS;
               return (
                 <Box
                   key={slide.image}
-                  ref={(el) => {
-                    cardRefs.current[index] = el;
-                  }}
+                  ref={(el) => (cardRefs.current[index] = el)}
+                  data-flip-id={slide.image}
                   component="button"
                   type="button"
                   aria-label={`نمایش ${slide.name}`}
-                  aria-pressed={selected}
                   aria-hidden={!visible}
                   tabIndex={visible ? 0 : -1}
                   onClick={() => go(index)}
                   sx={{
-                    position: "absolute",
-                    top: "50%",
-                    left: `${50 + position * 34}%`,
-                    transform: "translate(-50%, -50%)",
-                    width: selected ? "32%" : "24%",
-                    minWidth: 0,
-                    height: selected ? 100 : 76,
+                    position: "relative",
+                    flex: "0 0 30%",
+                    height: 100,
                     p: 0,
                     overflow: "hidden",
                     cursor: "pointer",
-                    borderRadius: selected ? "20px" : "14px",
-                    border: "1px solid",
-                    borderColor: selected
-                      ? "rgba(255,255,255,.85)"
-                      : "rgba(255,255,255,.18)",
-                    opacity: isOpening ? 0 : visible ? (selected ? 1 : 0.65) : 0,
-                    visibility: visible ? "visible" : "hidden",
-                    pointerEvents: visible ? "auto" : "none",
+                    borderRadius: "14px",
+                    border: "1px solid rgba(255,255,255,.3)",
                     bgcolor: "rgba(255,255,255,.1)",
-                    boxShadow: selected ? "0 8px 28px rgba(0,0,0,.2)" : "none",
-                    transition: reduceMotion
-                      ? "none"
-                      : `left 550ms ${CARD_EASE}, width 550ms ${CARD_EASE}, height 550ms ${CARD_EASE}, border-radius 550ms ${CARD_EASE}, border-color 550ms ease, box-shadow 550ms ease, opacity 250ms ease`,
-                    "&:hover": { opacity: isOpening ? 0 : 1 },
+                    opacity: 0.9,
+                    "&:hover": { opacity: 1 },
                     "&:focus-visible": {
                       outline: "2px solid white",
                       outlineOffset: 4,
@@ -620,7 +619,9 @@ export function HeroSection() {
                   <Box
                     component="img"
                     draggable={false}
-                    src={slide.poster || `/media/hero/${slide.image}-thumb.webp`}
+                    src={
+                      slide.poster || `/media/hero/${slide.image}-thumb.webp`
+                    }
                     alt={slide.name}
                     sx={{
                       display: "block",
@@ -697,9 +698,7 @@ export function HeroSection() {
                     {active && (
                       <Box
                         component="span"
-                        ref={(el) => {
-                          fillRefs.current[index] = el;
-                        }}
+                        ref={(el) => (fillRefs.current[index] = el)}
                         sx={{
                           position: "absolute",
                           inset: 0,
@@ -727,7 +726,10 @@ export function HeroSection() {
         {videoOpen && (
           <>
             <Box sx={{ display: "flex", justifyContent: "flex-end", p: 1 }}>
-              <Button onClick={() => setVideoOpen(false)} sx={{ color: "white" }}>
+              <Button
+                onClick={() => setVideoOpen(false)}
+                sx={{ color: "white" }}
+              >
                 بستن
               </Button>
             </Box>
