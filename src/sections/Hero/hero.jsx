@@ -10,12 +10,9 @@ gsap.registerPlugin(useGSAP, Flip);
 const SLIDE_SECONDS = 5; // the tan line fills over this time, then the next card opens
 const OPEN_SECONDS = 1.0;
 const SWAP_AT = 0.5;
-const WHEEL_GAP_MS = 120;
 const VISIBLE_CARDS = 3;
-const INTRO_ONCE_PER_SESSION = false;
-const INTRO_SAFETY_MS = 4000;
 const REVEAL = "[data-hero-title],[data-hero-fade]";
-const BRAND = "AVISHE"; // Latin wordmark (Persian letters must not be letter-spaced)
+const BRAND = "پویا شیمی آویژه";
 const HEADER_TONE = "light"; // "light" = white header + soft scrim (safe on any photo), "dark" = brown header for bright photos
 
 const FONT = '"Estedad", "Vazirmatn", Tahoma, sans-serif';
@@ -199,21 +196,20 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
   };
   goRef.current = go;
 
-  /* ---------- Cards appear first, then the frame opens ---------- */
+  /* ---------- One-time frame opening ---------- */
   useGSAP(
     () => {
       let stored = false;
       try {
-        stored = INTRO_ONCE_PER_SESSION && sessionStorage.getItem("hero-intro") === "1";
+        stored = sessionStorage.getItem("hero-intro") === "1";
       } catch {}
-      if (reduceMotion || window.matchMedia("(prefers-reduced-motion: reduce)").matches || stored || introPlayedRef.current) {
+      if (reduceMotion || stored || introPlayedRef.current) {
         introSkippedRef.current = true;
         busyRef.current = false;
         setIntroDone(true);
         return;
       }
       introPlayedRef.current = true;
-      introSkippedRef.current = false;
       busyRef.current = true;
       const frame = frameRef.current;
       const image = frame.querySelector("img");
@@ -222,15 +218,6 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
       const titles = rootRef.current.querySelectorAll("[data-hero-title]");
       const fades = rootRef.current.querySelectorAll("[data-hero-fade]");
       const cards = rootRef.current.querySelectorAll("[data-flip-id]");
-      const radius = radiusOf(frame, 36);
-      const opening = { progress: 0 };
-      // Open from the bottom center while preserving the corner radius.
-      const updateFrameClip = () => {
-        const remaining = 1 - opening.progress;
-        const top = 88 * remaining;
-        const horizontal = 30 * remaining;
-        frame.style.clipPath = `inset(${top}% ${horizontal}% 0% ${horizontal}% round ${radius}px)`;
-      };
       let cancelled = false;
       let finished = false;
       let timeline;
@@ -258,7 +245,7 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
         busyRef.current = false;
         setIntroDone(true);
       };
-      gsap.set(frame, { clipPath: `inset(88% 30% 0% 30% round ${radius}px)` });
+      gsap.set(frame, { clipPath: "inset(62% 22% 6% 22% round 40px)" });
       gsap.set(image, { scale: 1.3 });
       gsap.set(header, { opacity: 0, y: -14 });
       gsap.set(track, {
@@ -267,16 +254,12 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
         transformOrigin: "right center",
       });
       gsap.set(titles, { yPercent: 110 });
-      gsap.set(fillRef.current, { scaleX: 0 });
       gsap.set(fades, { opacity: 0, y: 16 });
-      gsap.set(cards, {
-        opacity: 0, y: 70, scale: 0.82,
-        rotate: (index) => [-6, 0, 6][index % 3],
-      });
+      gsap.set(cards, { opacity: 0, y: 48, scale: 0.9 });
       safetyTimeout = setTimeout(() => {
         timeline?.kill();
         finish();
-      }, INTRO_SAFETY_MS);
+      }, 4000);
       const preload = new Image();
       preload.src = fullImage(slides[0]);
       const play = async () => {
@@ -292,25 +275,25 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
         if (cancelled || finished) return;
         timeline = gsap
           .timeline({ defaults: { ease: "power3.out" }, onComplete: finish })
-          .to(cards, {
-            opacity: 1, y: 0, scale: 1, rotate: 0,
-            duration: 0.85, stagger: 0.12, ease: "back.out(1.5)",
-          }, 0)
           .to(
-            opening,
+            frame,
             {
-              progress: 1,
-              onUpdate: updateFrameClip,
+              clipPath: `inset(0% 0% 0% 0% round ${radiusOf(frame, 36)}px)`,
               duration: 1.15,
               ease: "power4.inOut",
             },
-            0.45,
+            0,
           )
-          .to(image, { scale: 1, duration: 1.8 }, 0.45)
-          .to(header, { opacity: 1, y: 0, duration: 0.7 }, 1)
-          .to(titles, { yPercent: 0, duration: 0.9, ease: "power4.out" }, 1.15)
-          .to(track, { opacity: 1, scaleX: 1, duration: 0.5 }, 1.3)
-          .to(fades, { opacity: 1, y: 0, duration: 0.7, stagger: 0.08 }, 1.4);
+          .to(image, { scale: 1, duration: 1.7 }, 0)
+          .to(header, { opacity: 1, y: 0, duration: 0.7 }, 0.55)
+          .to(titles, { yPercent: 0, duration: 0.9, ease: "power4.out" }, 0.7)
+          .to(track, { opacity: 1, scaleX: 1, duration: 0.5 }, 0.85)
+          .to(
+            cards,
+            { opacity: 1, y: 0, scale: 1, duration: 0.8, stagger: 0.09 },
+            0.85,
+          )
+          .to(fades, { opacity: 1, y: 0, duration: 0.7, stagger: 0.08 }, 0.95);
       };
       void play();
       return () => {
@@ -320,8 +303,6 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
         timeline?.kill();
         clear();
         busyRef.current = false;
-        // Let StrictMode's replacement setup play an interrupted intro.
-        if (!finished) introPlayedRef.current = false;
       };
     },
     { scope: rootRef, dependencies: [] },
@@ -417,33 +398,6 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
     else tween.resume();
   }, [paused, touching, activeSlide, reduceMotion, videoOpen, introDone]);
 
-  /* ---------- Scroll (wheel) = next / previous slide ---------- */
-  useEffect(() => {
-    const el = rootRef.current;
-    if (!el || videoOpen) return;
-    let lastTs = 0;
-    let locked = false;
-    const onWheel = (e) => {
-      if (Math.abs(e.deltaY) < 8 || Math.abs(e.deltaX) > Math.abs(e.deltaY))
-        return;
-      const next = activeRef.current + (e.deltaY > 0 ? 1 : -1);
-      if (next < 0 || next >= N) return; // first/last slide: page scrolls normally
-      e.preventDefault();
-      const now = performance.now();
-      const gap = now - lastTs;
-      lastTs = now;
-      if (busyRef.current) {
-        locked = true;
-        return;
-      }
-      if (locked && gap < WHEEL_GAP_MS) return;
-      locked = true;
-      goRef.current(next);
-    };
-    el.addEventListener("wheel", onWheel, { passive: false });
-    return () => el.removeEventListener("wheel", onWheel);
-  }, [videoOpen]);
-
   /* ---------- Video in the frame ---------- */
   useEffect(() => {
     const video = videoRef.current;
@@ -491,7 +445,7 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
         height: "100vh",
         "@supports (height: 100svh)": { height: "100svh" },
         minHeight: { xs: 560, md: 640 },
-        p: { xs: 1.5, md: 3 },
+        // p: { xs: 1.5, md: 3 },
       }}
     >
       <Box
@@ -516,7 +470,7 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
             overflow: "hidden",
             height: "100%",
             minHeight: 150,
-            borderRadius: { xs: "36px", md: "44px" },
+            // borderRadius: { xs: "36px", md: "44px" },
             bgcolor: T.frame,
           }}
         >
@@ -595,18 +549,55 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
               color: headerColor,
             }}
           >
-            <Typography
-              component="span"
+            <Box
+              component="a"
+              href="/"
               sx={{
-                fontFamily: 'Georgia, "Times New Roman", serif !important',
-                fontSize: 15,
-                fontWeight: 500,
-                letterSpacing: ".34em",
+                display: "flex",
+                alignItems: "center",
+                gap: { xs: 1.25, md: 1.75 },
                 color: "inherit",
+                textDecoration: "none",
+                borderRadius: 1,
+                "&:focus-visible": {
+                  outline: `2px solid ${T.accentOnImage}`,
+                  outlineOffset: 6,
+                },
               }}
             >
-              {BRAND}
-            </Typography>
+              <Box
+                component="span"
+                aria-hidden="true"
+                sx={{
+                  width: { xs: 40, md: 52 },
+                  height: { xs: 40, md: 52 },
+                  flexShrink: 0,
+                  bgcolor: HEADER_TONE === "light" ? T.accentOnImage : T.text,
+                  // Match the palette using the transparent logo as a mask.
+                  // Compensate for the PNG's empty margins within the mask.
+                  maskImage: 'url("/logo.png")',
+                  maskMode: "alpha",
+                  maskSize: "148%",
+                  maskPosition: "center",
+                  maskRepeat: "no-repeat",
+                  WebkitMaskImage: 'url("/logo.png")',
+                  WebkitMaskSize: "148%",
+                  WebkitMaskPosition: "center",
+                  WebkitMaskRepeat: "no-repeat",
+                }}
+              />
+              <Typography
+                component="span"
+                sx={{
+                  fontSize: { xs: "0.85rem", md: "1.1rem" },
+                  fontWeight: 600,
+                  lineHeight: 1.8,
+                  color: "inherit",
+                }}
+              >
+                {BRAND}
+              </Typography>
+            </Box>
             <Box
               component="button"
               type="button"
