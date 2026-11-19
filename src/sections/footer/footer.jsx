@@ -5,6 +5,11 @@ import { Brand } from "../../shared/ui/Brand";
 import { T, WRAP, fa } from "../../shared/theme";
 import { CONTACT } from "../../data/contact";
 
+const HAS_EMAIL = Boolean(CONTACT.email && !CONTACT.email.endsWith("@example.com"));
+const HAS_ADDRESS = Boolean(CONTACT.address && !CONTACT.address.startsWith("نشانی شرکت"));
+const REAL_PHONES = CONTACT.phones.filter((p) => !p.tel.includes("00000"));
+const CONTACT_READY = HAS_EMAIL || REAL_PHONES.length > 0;
+
 const Label = ({ children }) => (
   <Typography sx={{ color: T.accent, fontSize: "0.85rem", fontWeight: 600, mb: 1.5 }}>
     {children}
@@ -21,9 +26,18 @@ export function FooterSection() {
       component="footer"
       id="contact"
       dir="rtl"
-      sx={{ bgcolor: T.dark, color: "#f1e9df", pt: { xs: 8, md: 12 }, pb: 4 }}
+      sx={{ bgcolor: T.dark, color: "#f1e9df", pt: { xs: 9, md: 13 }, pb: { xs: 110, md: 4 }, overflow: "hidden" }}
     >
       <Box sx={WRAP}>
+        <Box data-reveal="" sx={{ pb: { xs: 7, md: 11 }, mb: { xs: 7, md: 10 }, borderBottom: "1px solid rgba(255,255,255,.15)", display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 3, flexWrap: "wrap" }}>
+          <Box sx={{ maxWidth: 800 }}>
+            <Typography sx={{ color: T.accent, fontWeight: 800, fontSize: ".8rem", mb: 2 }}>شروع یک همکاری تازه</Typography>
+            <Typography component="h2" sx={{ color: "#f7f4ee", fontWeight: 800, letterSpacing: "-.035em", lineHeight: 1.55, fontSize: { xs: "clamp(2rem, 8vw, 3rem)", md: "clamp(3rem, 5vw, 5rem)" } }}>
+              آینده‌ی تولید، از یک گفت‌وگو آغاز می‌شود.
+            </Typography>
+          </Box>
+          {HAS_EMAIL && <Box component="a" href={`mailto:${CONTACT.email}`} sx={{ borderRadius: 99, minHeight: 54, display: "flex", alignItems: "center", gap: 2, px: 3, color: T.dark, bgcolor: T.accent, textDecoration: "none", fontWeight: 800, "&:hover": { bgcolor: "#ffc6a9" } }}>شروع گفت‌وگو <Box component="span" aria-hidden="true">↗</Box></Box>}
+        </Box>
         <Box
           sx={{
             display: "grid",
@@ -41,14 +55,14 @@ export function FooterSection() {
           <Box data-reveal="" data-delay="0.1">
             <Label>نشانی</Label>
             <Typography component="address" sx={{ fontStyle: "normal", lineHeight: 2.1 }}>
-              {CONTACT.address}
+              {HAS_ADDRESS ? CONTACT.address : "اطلاعات نشانی پس از تأیید شرکت در این بخش قرار می‌گیرد."}
             </Typography>
           </Box>
 
           <Box data-reveal="" data-delay="0.2">
             <Label>تماس</Label>
             <Box sx={{ display: "grid", gap: 0.5 }}>
-              {CONTACT.phones.map((p) => (
+              {REAL_PHONES.map((p) => (
                 <Box
                   key={p.tel}
                   component="a"
@@ -66,7 +80,7 @@ export function FooterSection() {
                   {p.label}
                 </Box>
               ))}
-              {CONTACT.email && (
+              {HAS_EMAIL && (
                 <Box
                   component="a"
                   href={`mailto:${CONTACT.email}`}
@@ -75,6 +89,7 @@ export function FooterSection() {
                   {CONTACT.email}
                 </Box>
               )}
+              {!CONTACT_READY && <Typography sx={{ color: "rgba(241,233,223,.7)", lineHeight: 2, fontSize: ".92rem" }}>راه‌های ارتباطی پس از ثبت اطلاعات رسمی شرکت فعال می‌شوند.</Typography>}
             </Box>
           </Box>
         </Box>

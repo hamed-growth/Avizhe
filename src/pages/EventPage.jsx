@@ -11,6 +11,7 @@ import { EVENTS, getEvent } from "../data/events";
 
 function Lightbox({ photos, index, onClose, onIndex }) {
   const open = index !== null;
+  const swipeStart = useRef(null);
   const go = useCallback(
     (d) => onIndex((i) => (i + d + photos.length) % photos.length),
     [photos.length, onIndex],
@@ -50,7 +51,17 @@ function Lightbox({ photos, index, onClose, onIndex }) {
       slotProps={{ paper: { sx: { bgcolor: "rgba(20,13,8,.96)" } } }}
     >
       {open && (
-        <Box dir="rtl" sx={{ position: "relative", height: "100%", display: "grid", placeItems: "center", p: { xs: 1, md: 6 } }}>
+        <Box dir="rtl"
+          onTouchStart={(e) => { swipeStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }}
+          onTouchEnd={(e) => {
+            const start = swipeStart.current;
+            if (!start || photos.length < 2) return;
+            const dx = e.changedTouches[0].clientX - start.x;
+            const dy = e.changedTouches[0].clientY - start.y;
+            if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.3) go(dx < 0 ? 1 : -1);
+            swipeStart.current = null;
+          }}
+          sx={{ position: "relative", height: "100%", display: "grid", placeItems: "center", p: { xs: 1, md: 6 } }}>
           <Box
             component="img"
             src={photos[index]}
@@ -97,7 +108,7 @@ export default function EventPage() {
       <Box sx={{ ...WRAP, pt: { xs: 6, md: 10 } }}>
         <SectionLabel>{event.place}</SectionLabel>
         <Box sx={{ display: "flex", alignItems: "baseline", gap: { xs: 2, md: 4 }, flexWrap: "wrap" }}>
-          <Typography component="h1" sx={{ fontSize: { xs: "4rem", md: "9rem" }, fontWeight: 800, lineHeight: 1.1, color: T.accentDark }}>
+          <Typography component="h1" sx={{ fontSize: { xs: "clamp(4rem, 15vw, 6rem)", md: "9rem" }, fontWeight: 900, lineHeight: 1.1, color: T.accentDark }}>
             {fa(event.year)}
           </Typography>
           <Typography sx={{ fontSize: { xs: "1.1rem", md: "1.6rem" }, fontWeight: 600 }}>{event.title}</Typography>
@@ -111,7 +122,7 @@ export default function EventPage() {
             component="img"
             src={event.cover}
             alt=""
-            sx={{ width: "100%", aspectRatio: { xs: "4 / 3", md: "21 / 9" }, objectFit: "cover", display: "block" }}
+            sx={{ width: "100%", aspectRatio: { xs: "4 / 4.2", md: "21 / 9" }, objectFit: "cover", display: "block", borderRadius: { xs: "22px", md: "12px" } }}
           />
         </LineFrame>
       </Box>
@@ -131,7 +142,7 @@ export default function EventPage() {
                 controls
                 playsInline
                 preload="none"
-                sx={{ width: "100%", aspectRatio: "16 / 9", bgcolor: T.dark, display: "block" }}
+                sx={{ width: "100%", aspectRatio: "16 / 9", bgcolor: T.dark, display: "block", borderRadius: "18px" }}
               />
             ))}
           </Box>
@@ -159,6 +170,7 @@ export default function EventPage() {
                   border: 0,
                   bgcolor: T.frame,
                   overflow: "hidden",
+                  borderRadius: { xs: "14px", md: "18px" },
                   breakInside: "avoid",
                   cursor: "zoom-in",
                   "&:hover img": { transform: "scale(1.05)" },

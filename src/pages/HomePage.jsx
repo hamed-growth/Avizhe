@@ -9,6 +9,8 @@ import { NewsSection } from "../sections/news/news";
 import { FooterSection } from "../sections/footer/footer";
 import { MenuDialog } from "../shared/ui/MenuDialog";
 import { ScrollTrigger } from "../shared/gsap";
+import { MobileDock } from "../shared/ui/MobileDock";
+import { TopProgress } from "../shared/ui/TopProgress";
 
 export default function HomePage() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -26,6 +28,7 @@ export default function HomePage() {
 
   return (
     <Box component="main" sx={{ p: 0, m: 0 }}>
+      <TopProgress />
       <HeroSection onMenuClick={() => setMenuOpen(true)} />
       <IntroduceSection />
       <ProductsSection />
@@ -33,6 +36,7 @@ export default function HomePage() {
       <NewsSection />
       <FooterSection />
       <MenuDialog open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <MobileDock hidden={menuOpen || hash.startsWith("#products/")} />
     </Box>
   );
 }

@@ -13,15 +13,15 @@ export function InnerHeader({ backTo = "/", backLabel = "بازگشت" }) {
         position: "sticky",
         top: 0,
         zIndex: 20,
-        bgcolor: "rgba(250,248,246,.88)",
-        backdropFilter: "blur(10px)",
+        bgcolor: "rgba(251,250,247,.9)",
+        backdropFilter: "blur(20px)",
         borderBottom: `1px solid ${T.line}`,
       }}
     >
       <Box
         sx={{
           ...WRAP,
-          py: 1.5,
+          py: 1.5, minHeight: 76,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -34,8 +34,13 @@ export function InnerHeader({ backTo = "/", backLabel = "بازگشت" }) {
           sx={{
             color: T.text,
             textDecoration: "none",
-            fontWeight: 600,
-            fontSize: "0.95rem",
+            fontWeight: 800,
+            fontSize: { xs: ".78rem", md: ".95rem" },
+            borderRadius: 99,
+            py: 1.2,
+            px: 2,
+            border: `1px solid ${T.line}`,
+            minHeight: 44,
             display: "flex",
             alignItems: "center",
             gap: 1,

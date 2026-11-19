@@ -5,8 +5,9 @@ import { LineFrame } from "../../shared/ui/LineFrame";
 import { T, fa } from "../../shared/theme";
 import { CONTACT } from "../../data/contact";
 
-const BG_OPEN = "rgba(250,248,246,1)";
-const BG_CLEAR = "rgba(250,248,246,0)";
+const BG_OPEN = "rgba(251,250,247,1)";
+const BG_CLEAR = "rgba(251,250,247,0)";
+const HAS_PHONE = Boolean(CONTACT.phones?.[0]?.tel && !CONTACT.phones[0].tel.includes("00000"));
 
 /**
  * Full-screen product explorer. The card's photo "flies" to the media column
@@ -104,7 +105,7 @@ export function ProductExplorer({ cat, origin, onExited }) {
       const n = (next + cat.products.length) % cat.products.length;
       setGradeId(cat.products[n].id);
       requestAnimationFrame(() =>
-        detailRef.current?.scrollIntoView({ behavior: "smooth", block }),
+        detailRef.current?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block }),
       );
     },
     [cat.products],
@@ -127,6 +128,14 @@ export function ProductExplorer({ cat, origin, onExited }) {
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") close();
+      if (e.key === "Tab" && overlayRef.current) {
+        const focusables = [...overlayRef.current.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+          .filter((node) => node.getClientRects().length > 0);
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (first && last && e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (first && last && !e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
       // RTL: ArrowLeft = next, ArrowRight = previous
       if (many && e.key === "ArrowLeft") select(idx + 1);
       if (many && e.key === "ArrowRight") select(idx - 1);
@@ -165,6 +174,7 @@ export function ProductExplorer({ cat, origin, onExited }) {
         color: T.text,
         overflowY: "auto",
         overscrollBehavior: "contain",
+        WebkitOverflowScrolling: "touch",
       }}
     >
       {/* flying photo */}
@@ -191,8 +201,8 @@ export function ProductExplorer({ cat, origin, onExited }) {
         onClick={() => close()}
         sx={{
           position: "fixed",
-          top: { xs: 14, md: 24 },
-          left: { xs: 14, md: 28 },
+          top: { xs: "max(16px, env(safe-area-inset-top))", md: 24 },
+          left: { xs: 20, md: 28 },
           zIndex: 6,
           display: "flex",
           alignItems: "center",
@@ -201,7 +211,7 @@ export function ProductExplorer({ cat, origin, onExited }) {
           py: 1,
           border: `1px solid ${T.line}`,
           borderRadius: 99,
-          bgcolor: "rgba(250,248,246,.85)",
+          bgcolor: "rgba(251,250,247,.9)",
           backdropFilter: "blur(10px)",
           color: T.text,
           font: "inherit",
@@ -221,8 +231,11 @@ export function ProductExplorer({ cat, origin, onExited }) {
           sx={{
             position: { xs: "relative", md: "sticky" },
             top: 0,
-            height: { xs: "42dvh", md: "100dvh" },
+            height: { xs: "38dvh", md: "100dvh" },
+            minHeight: { xs: 270, md: 0 },
             overflow: "hidden",
+            borderBottomLeftRadius: { xs: 28, md: 0 },
+            borderBottomRightRadius: { xs: 28, md: 0 },
             bgcolor: T.frame,
           }}
         >
@@ -260,7 +273,7 @@ export function ProductExplorer({ cat, origin, onExited }) {
 
         {/* content column */}
         <Box sx={{ minWidth: 0 }}>
-          <Box sx={{ px: padX, pt: { xs: 5, md: 14 } }}>
+          <Box sx={{ px: padX, pt: { xs: 4, md: 14 } }}>
             <Typography data-x="" sx={{ color: T.accentDark, fontWeight: 600, direction: "ltr", textAlign: "right" }}>
               {cat.latin}
             </Typography>
@@ -272,11 +285,11 @@ export function ProductExplorer({ cat, origin, onExited }) {
             </Typography>
 
             {many && (
-              <Box data-x="" sx={{ mt: 6 }}>
+              <Box data-x="" sx={{ mt: 4.5 }}>
                 <Typography sx={{ fontWeight: 600, mb: 1.5 }}>
                   انتخاب گرید <Box component="span" sx={{ color: T.muted, fontWeight: 400 }}>({fa(cat.products.length)} گرید)</Box>
                 </Typography>
-                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(86px, 1fr))", gap: 1 }}>
+                <Box data-snap-scroll="" sx={{ display: "flex", gap: 1, overflowX: "auto", scrollSnapType: "x mandatory", pb: 1 }}>
                   {cat.products.map((p, i) => {
                     const on = i === idx;
                     return (
@@ -287,7 +300,7 @@ export function ProductExplorer({ cat, origin, onExited }) {
                         onClick={() => select(i)}
                         aria-pressed={on}
                         sx={{
-                          py: 1.25,
+                          py: 1.2, px: 1.8, minHeight: 44, flex: "0 0 auto", scrollSnapAlign: "start", borderRadius: 99,
                           border: `1px solid ${on ? T.text : T.line}`,
                           bgcolor: on ? T.text : "transparent",
                           color: on ? T.bg : T.text,
@@ -377,12 +390,13 @@ export function ProductExplorer({ cat, origin, onExited }) {
               bottom: 0,
               mt: 8,
               px: padX,
-              py: 2,
+              py: { xs: 1.5, md: 2 },
+              pb: { xs: "max(16px, env(safe-area-inset-bottom))", md: 2 },
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
               gap: 2,
-              bgcolor: "rgba(250,248,246,.92)",
+              bgcolor: "rgba(251,250,247,.95)",
               backdropFilter: "blur(12px)",
               borderTop: `1px solid ${T.line}`,
             }}
@@ -392,7 +406,7 @@ export function ProductExplorer({ cat, origin, onExited }) {
               <Typography noWrap sx={{ fontWeight: 600 }}>{product.name}</Typography>
             </Box>
             <Box sx={{ display: "flex", gap: 1, flexShrink: 0 }}>
-              <Box
+              {HAS_PHONE && <Box
                 component="a"
                 href={`tel:${CONTACT.phones[0].tel}`}
                 sx={{
@@ -408,14 +422,16 @@ export function ProductExplorer({ cat, origin, onExited }) {
                 }}
               >
                 تماس
-              </Box>
+              </Box>}
               <Box
                 component="button"
                 type="button"
                 onClick={goContact}
                 sx={{
-                  px: 3,
+                  px: { xs: 2.2, md: 3 },
                   py: 1.5,
+                  minHeight: 48,
+                  borderRadius: 99,
                   border: 0,
                   bgcolor: T.text,
                   color: T.bg,
@@ -427,7 +443,7 @@ export function ProductExplorer({ cat, origin, onExited }) {
                   "&:focus-visible": { outline: `2px solid ${T.accent}`, outlineOffset: 3 },
                 }}
               >
-                درخواست مشاوره
+                {HAS_PHONE ? "درخواست مشاوره" : "راه‌های ارتباطی"}
               </Box>
             </Box>
           </Box>
@@ -450,6 +466,7 @@ function Chip({ children, dim = false, ltr = false }) {
       sx={{
         px: 1.5,
         py: 0.5,
+        borderRadius: 99,
         border: `1px solid ${dim ? T.line : T.accent}`,
         color: dim ? T.muted : T.text,
         fontSize: "0.85rem",
