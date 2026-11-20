@@ -1,147 +1,60 @@
-import { useEffect, useRef, useState } from "react";
-import { Box, Typography } from "@mui/material";
-import { gsap, useGSAP, prefersReducedMotion } from "../../shared/gsap";
-import { useReveal } from "../../shared/useReveal";
-import { SectionLabel, SectionTitle } from "../../shared/ui/Reveal";
-import { T, WRAP } from "../../shared/theme";
-
-const COMPANY = "پویا شیمی آویژه";
-const DESCRIPTION =
-  "پویا شیمی آویژه با تمرکز بر تأمین مواد اولیه شیمیایی، از جمله پراکسیدها و رزین‌ها، در کنار تولیدکنندگان صنعتی است. هدف ما این است که انتخاب مواد اولیه برای شما ساده‌تر و آگاهانه‌تر شود.";
-
-// TODO: replace with the real company-introduction video
-const VIDEO = "/media/videos/01.mp4";
-const POSTER = "/media/posters/01.jpg";
-
+import { Link } from "react-router-dom";
+import { Eyebrow, Icon } from "../../shared/ui/DesignSystem";
 export function IntroduceSection() {
-  const rootRef = useRef(null);
-  const wrapRef = useRef(null);
-  const videoRef = useRef(null);
-  const [muted, setMuted] = useState(true);
-
-  useReveal(rootRef);
-
-  // The video starts as an inset rounded card and opens to the full width while scrolling.
-  useGSAP(
-    () => {
-      if (prefersReducedMotion()) return;
-      const st = {
-        trigger: wrapRef.current,
-        start: "top 92%",
-        end: "top 15%",
-        scrub: 0.6,
-      };
-      gsap.fromTo(
-        wrapRef.current,
-        { clipPath: "inset(0% 9% round 28px)" },
-        { clipPath: "inset(0% 0% round 0px)", ease: "none", scrollTrigger: st },
-      );
-      gsap.fromTo(
-        videoRef.current,
-        { scale: 1.18 },
-        { scale: 1, ease: "none", scrollTrigger: st },
-      );
-    },
-    { scope: rootRef },
-  );
-
-  // Play only while visible (saves battery/bandwidth, and avoids sound when off-screen).
-  useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    const io = new IntersectionObserver(
-      ([e]) => (e.isIntersecting ? v.play().catch(() => {}) : v.pause()),
-      { threshold: 0.25 },
-    );
-    io.observe(v);
-    return () => io.disconnect();
-  }, []);
-
   return (
-    <Box
-      ref={rootRef}
-      component="section"
+    <section
+      className="about-section section-space"
       id="about"
-      dir="rtl"
       aria-labelledby="about-title"
-      sx={{ bgcolor: T.bg, color: T.text, pt: { xs: 9, md: 15 } }}
     >
-      <Box
-        sx={{
-          ...WRAP,
-          display: "grid",
-          gap: { xs: 3, md: 10 },
-          gridTemplateColumns: { md: "1fr 1fr" },
-          alignItems: "end",
-        }}
-      >
-        <Box>
-          <SectionLabel>معرفی شرکت</SectionLabel>
-          <SectionTitle id="about-title">{COMPANY}</SectionTitle>
-        </Box>
-        <Typography
-          data-reveal=""
-          data-delay="0.15"
-          sx={{
-            color: T.muted,
-            fontSize: { xs: "0.95rem", md: "1.05rem" },
-            lineHeight: 2.1,
-          }}
-        >
-          {DESCRIPTION}
-        </Typography>
-      </Box>
-
-      {/* Full-width video */}
-      <Box
-        ref={wrapRef}
-        sx={{
-          position: "relative",
-          mt: { xs: 6, md: 10 },
-          width: "100%",
-          height: { xs: "62vw", md: "min(82vh, 56vw)" },
-          minHeight: 280,
-          overflow: "hidden",
-          bgcolor: T.dark,
-        }}
-      >
-        <Box
-          ref={videoRef}
-          component="video"
-          src={VIDEO}
-          poster={POSTER}
-          muted={muted}
-          loop
-          playsInline
-          preload="metadata"
-          aria-label="ویدیوی معرفی شرکت"
-          sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-        />
-        <Box
-          component="button"
-          type="button"
-          onClick={() => setMuted((m) => !m)}
-          aria-label={muted ? "پخش با صدا" : "قطع صدا"}
-          sx={{
-            position: "absolute",
-            bottom: { xs: 14, md: 28 },
-            insetInlineStart: { xs: 14, md: 40 },
-            px: 2,
-            py: 0.75,
-            border: "1px solid rgba(255,255,255,.55)",
-            borderRadius: 99,
-            bgcolor: "rgba(28,18,10,.35)",
-            backdropFilter: "blur(8px)",
-            color: "#fff",
-            font: "inherit",
-            fontSize: "0.85rem",
-            cursor: "pointer",
-            "&:focus-visible": { outline: "2px solid #fff", outlineOffset: 3 },
-          }}
-        >
-          {muted ? "فعال‌کردن صدا" : "قطع صدا"}
-        </Box>
-      </Box>
-    </Box>
+      <div className="container about-grid" data-enter>
+        <div className="about-copy">
+          <Eyebrow>داستان آویژه</Eyebrow>
+          <h2 id="about-title">
+            پشت هر محصول،
+            <br />
+            یک دنیای در حرکت.
+          </h2>
+          <p>
+            پویا شیمی آویژه در زمینهٔ رزین‌های پلی‌استر غیراشباع و پراکسیدهای آلی
+            فعالیت می‌کند. دنیای ما، نقطهٔ تلاقی مواد، فرایندها و آدم‌هاست.
+          </p>
+          <p className="muted">
+            از شناخت نیاز شما تا انتخاب محصول متناسب با فرایند تولید، اینجا مسیر
+            آشنایی و گفت‌وگو باز است.
+          </p>
+          <Link to="/#products" className="text-link">
+            با محصولات آشنا شوید
+            <Icon />
+          </Link>
+        </div>
+        <div className="about-visual">
+          <img
+            src="/media/hero/industry.webp"
+            alt="یکی از کارکنان پویا شیمی آویژه در فضای کارخانه"
+            loading="lazy"
+          />
+          <div className="about-image-caption">
+            <span dir="rtl">
+              آدم‌ها.
+              <br />
+              فرایندها.
+              <br />
+              امکان‌ها.
+            </span>
+            <span className="image-stamp" aria-hidden="true">
+              آویژه
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="container material-strip">
+        <span dir="rtl">همراهیِ خوب، از اینجا شروع می‌شود.</span>
+        <span>مواد اولیه. ارتباط ماندگار.</span>
+        <span className="strip-mark" aria-hidden="true">
+          ✳
+        </span>
+      </div>
+    </section>
   );
 }

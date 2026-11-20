@@ -1,0 +1,483 @@
+/* Persian typography and reading direction across the shared visual system. */
+.eyebrow,
+.wordmark strong,
+.wordmark small,
+.hero-intro .eyebrow,
+.hero-intro h1,
+.story-title,
+.story-subtitle,
+.story-badge,
+.story-small-label,
+.story-type,
+.hero-footnote,
+.section-side-note,
+.about-image-caption > span,
+.material-strip > span,
+.product-image-word,
+.product-card-info p,
+.event-image-caption,
+.event-bottom-line > span,
+.journal-image-title,
+.journal-note > span,
+.footer-brand > span,
+.footer-monogram,
+.footer-location-word,
+.menu-intro h2,
+.menu-body nav small,
+.menu-bottom > span,
+.explorer-brand,
+.product-explorer-media > div > span,
+.product-explorer-media > div > p,
+.gallery-signoff,
+.not-found-page > span {
+  font-family: "Vazirmatn", Tahoma, sans-serif;
+  letter-spacing: 0;
+  direction: rtl;
+}
+.wordmark strong {
+  font-size: 17px;
+  line-height: 1.9;
+  font-weight: 750;
+}
+.wordmark small {
+  font-size: 10px;
+  line-height: 1.8;
+  font-weight: 500;
+  color: var(--muted);
+}
+.wordmark--light small {
+  color: #bac7d3;
+}
+.hero-intro h1 {
+  font-size: clamp(3.5rem, 6.1vw, 6.1rem);
+  line-height: 1.45;
+  font-weight: 800;
+}
+.hero-intro .eyebrow {
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+.hero-description {
+  max-width: 370px;
+}
+.hero-description h2 {
+  font-size: 25px;
+  letter-spacing: 0;
+}
+.story-card {
+  text-align: right;
+}
+.story-title {
+  font-size: clamp(1.6rem, 2.6vw, 2.5rem);
+  line-height: 1.6;
+  font-weight: 800;
+  max-width: 390px;
+}
+.story-subtitle {
+  text-align: right;
+  font-size: 12px;
+  line-height: 1.9;
+}
+.story-card--small .story-title {
+  font-size: clamp(1.1rem, 1.6vw, 1.6rem);
+  line-height: 1.8;
+}
+.story-card--featured .story-caption {
+  right: 24px;
+  left: 100px;
+}
+.story-card--small .story-caption {
+  right: 18px;
+  left: 18px;
+  gap: 4px;
+}
+.story-badge {
+  right: 18px;
+  left: auto;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.story-small-label {
+  right: 17px;
+  left: 12px;
+  font-size: 12px;
+  line-height: 1.9;
+}
+.story-type {
+  right: auto;
+  left: 22px;
+  font-size: 11px;
+  line-height: 1.8;
+}
+.hero-toolbar {
+  direction: rtl;
+}
+.story-progress > span {
+  right: 0;
+  left: auto;
+}
+.hero-footnote {
+  font-size: 11px;
+  line-height: 2;
+}
+.section-side-note {
+  font-size: 13px;
+}
+.about-visual,
+.product-image,
+.event-spotlight,
+.journal-image,
+.product-explorer-grid,
+.product-explorer-media,
+.event-explorer-body {
+  direction: rtl;
+}
+.about-image-caption > span:first-child {
+  font-size: 24px;
+  line-height: 1.8;
+}
+.image-stamp {
+  font-size: 29px;
+  line-height: 1.6;
+}
+.material-strip > span:first-child {
+  font-size: 16px;
+  line-height: 2;
+}
+.product-image-word {
+  right: 25px;
+  left: 90px;
+  font-size: clamp(2rem, 3.5vw, 3.5rem);
+  line-height: 1.7;
+}
+.product-card-action {
+  left: 25px;
+  right: auto;
+}
+.product-card-info p {
+  font-size: 12px;
+  line-height: 2;
+}
+.event-image-caption {
+  right: 30px;
+  left: 24px;
+  font-size: clamp(2rem, 3.1vw, 3.2rem);
+  line-height: 1.7;
+}
+.event-media-count {
+  right: 21px;
+  left: auto;
+}
+.event-bottom-line > span:last-child {
+  font-size: 12px;
+  line-height: 2;
+}
+.journal-image-title {
+  right: 24px;
+  left: 24px;
+  font-size: 35px;
+  line-height: 1.7;
+}
+.journal-note > span {
+  font-size: 13px;
+  line-height: 1.9;
+}
+.footer-monogram {
+  font-size: 65px;
+  line-height: 1.6;
+  text-align: left;
+}
+.footer-brand > span {
+  font-size: 11px;
+  line-height: 2;
+}
+.footer-location-word {
+  font-size: 23px;
+  line-height: 1.8;
+}
+.menu-intro h2 {
+  text-align: right;
+  font-size: clamp(2rem, 3.8vw, 3.9rem);
+  line-height: 1.7;
+  font-weight: 800;
+}
+.menu-body nav small {
+  font-size: 12px;
+  line-height: 2;
+}
+.menu-bottom > span:last-child {
+  font-size: 11px;
+  line-height: 2;
+}
+.explorer-brand {
+  font-size: 15px;
+  line-height: 1.9;
+}
+.product-explorer-media > div {
+  right: 40px;
+  left: 30px;
+}
+.product-explorer-media > div > span {
+  font-size: clamp(2.6rem, 4.3vw, 4.8rem);
+  line-height: 1.65;
+  font-weight: 800;
+}
+.product-explorer-media > div > p:last-child {
+  font-size: 15px;
+  line-height: 2;
+}
+.gallery-signoff {
+  font-size: 12px;
+  line-height: 2;
+}
+.not-found-page > span {
+  font-size: 12px;
+  line-height: 2;
+}
+@media (max-width: 1190px) {
+  .hero-intro h1 {
+    font-size: 6.5vw;
+  }
+  .product-image-word {
+    font-size: 38px;
+  }
+}
+@media (max-width: 800px) {
+  .wordmark strong {
+    font-size: 16px;
+  }
+  .hero-intro h1 {
+    font-size: 7.2vw;
+  }
+  .hero-description h2 {
+    font-size: 21px;
+  }
+  .hero-description {
+    max-width: 280px;
+  }
+  .story-card--small .story-title {
+    font-size: 25px;
+  }
+  .product-image-word {
+    font-size: 31px;
+    right: 20px;
+    left: 68px;
+  }
+  .product-card-action {
+    left: 18px;
+    right: auto;
+  }
+  .product-explorer-media > div {
+    right: 28px;
+    left: 28px;
+  }
+  .product-explorer-media > div > span {
+    font-size: 38px;
+    white-space: normal;
+  }
+}
+@media (max-width: 540px) {
+  .wordmark strong {
+    font-size: 14px;
+    line-height: 1.9;
+  }
+  .wordmark small {
+    font-size: 9px;
+    line-height: 1.8;
+  }
+  .hero-intro h1 {
+    font-size: clamp(2.5rem, 10.3vw, 3.4rem);
+    line-height: 1.5;
+  }
+  .hero-intro .eyebrow {
+    font-size: 11px;
+    margin-bottom: 9px;
+  }
+  .hero-description {
+    margin-top: 8px;
+    max-width: 100%;
+  }
+  .hero-description p {
+    font-size: 14px;
+    line-height: 2;
+  }
+  .story-card--featured .story-caption {
+    right: 16px;
+    left: 65px;
+    bottom: 14px;
+    gap: 2px;
+  }
+  .story-title {
+    font-size: 25px;
+    line-height: 1.6;
+    max-width: 250px;
+  }
+  .story-subtitle {
+    font-size: 10px;
+    line-height: 1.8;
+  }
+  .story-card--small .story-title {
+    font-size: 17px;
+    line-height: 1.9;
+    max-width: none;
+  }
+  .story-card--small .story-subtitle {
+    font-size: 9px;
+    line-height: 1.9;
+  }
+  .story-card--small .story-caption {
+    right: 12px;
+    left: 10px;
+    bottom: 13px;
+    gap: 3px;
+  }
+  .story-badge {
+    right: 12px;
+    left: auto;
+    font-size: 10px;
+    padding: 6px 10px;
+  }
+  .story-small-label {
+    right: 12px;
+    left: 10px;
+    top: 12px;
+    font-size: 10px;
+  }
+  .story-type {
+    left: 14px;
+    right: auto;
+    font-size: 9px;
+    bottom: 16px;
+  }
+  .hero-footnote {
+    font-size: 9px;
+    line-height: 2;
+    gap: 12px;
+    align-items: center;
+  }
+  .hero-footnote > span:last-child {
+    max-width: 150px;
+    gap: 5px;
+  }
+  .material-strip > span:first-child {
+    font-size: 12px;
+  }
+  .material-strip > span:nth-child(2) {
+    font-size: 11px;
+  }
+  .product-image-word {
+    font-size: 38px;
+    right: 20px;
+    left: 75px;
+    bottom: 21px;
+  }
+  .product-card-action {
+    left: 20px;
+    right: auto;
+  }
+  .product-card-info p {
+    font-size: 12px;
+  }
+  .event-image-caption {
+    right: 22px;
+    left: 22px;
+    font-size: 32px;
+    line-height: 1.7;
+  }
+  .event-media-count {
+    right: 16px;
+    left: auto;
+  }
+  .event-bottom-line {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .event-bottom-line > span:last-child {
+    font-size: 10px;
+    line-height: 2;
+    max-width: none;
+    text-align: right;
+  }
+  .journal-image-title {
+    font-size: 32px;
+    line-height: 1.7;
+    right: 23px;
+  }
+  .journal-note > span {
+    font-size: 12px;
+  }
+  .footer-monogram {
+    font-size: 35px;
+    line-height: 1.7;
+  }
+  .footer-brand .wordmark strong {
+    font-size: 15px;
+  }
+  .footer-brand .wordmark small {
+    font-size: 10px;
+  }
+  .footer-location-word {
+    font-size: 20px;
+    line-height: 1.8;
+  }
+  .menu-intro h2 {
+    font-size: 29px;
+    line-height: 1.8;
+  }
+  .menu-body nav small {
+    font-size: 11px;
+  }
+  .menu-bottom > span:last-child {
+    font-size: 10px;
+  }
+  .explorer-brand {
+    font-size: 13px;
+  }
+  .product-explorer-media > div {
+    right: 22px;
+    left: 22px;
+  }
+  .product-explorer-media > div > span {
+    font-size: 32px;
+    line-height: 1.7;
+  }
+  .product-explorer-media > div > p:last-child {
+    font-size: 12px;
+    line-height: 2;
+  }
+  .gallery-signoff {
+    font-size: 11px;
+  }
+}
+@media (max-width: 370px) {
+  .story-title {
+    font-size: 22px;
+  }
+  .story-card--small .story-title {
+    font-size: 15px;
+  }
+  .story-card--small .story-subtitle {
+    display: none;
+  }
+  .hero-footnote {
+    font-size: 8px;
+  }
+  .wordmark strong {
+    font-size: 13px;
+  }
+  .product-image-word {
+    font-size: 33px;
+  }
+}
+.section-heading h2,
+.about-copy h2,
+.hero-description h2,
+.product-card-info h3,
+.footer-invitation h2,
+.grade-detail > h3,
+.product-explorer-content > h2,
+.article-content h2,
+.journal-featured h3 {
+  letter-spacing: 0;
+}

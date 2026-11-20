@@ -1,170 +1,111 @@
-import { useRef } from "react";
-import { Box, Typography } from "@mui/material";
-import { useReveal } from "../../shared/useReveal";
-import { Brand } from "../../shared/ui/Brand";
-import { MENU } from "../../shared/ui/MenuDialog";
-import { T, WRAP, fa } from "../../shared/theme";
+import { Link } from "react-router-dom";
 import { CONTACT } from "../../data/contact";
-
-const MUTED = "rgba(241,233,223,.7)";
-
-const Label = ({ children }) => (
-  <Typography sx={{ color: T.accent, fontSize: "0.85rem", fontWeight: 600, mb: 1.5 }}>
-    {children}
-  </Typography>
-);
-
-// Numbers must stay left-to-right inside the RTL page, otherwise "۰۲۱-۱۲۳۴" renders scrambled.
-const ltr = { direction: "ltr", unicodeBidi: "isolate", display: "inline-block" };
-
-const scrollToId = (id) => (e) => {
-  const el = document.getElementById(id);
-  if (!el) return; // let the browser follow the href
-  e.preventDefault();
-  el.scrollIntoView({ behavior: "smooth" });
-};
+import {
+  Eyebrow,
+  Icon,
+  NAV_ITEMS,
+  Wordmark,
+} from "../../shared/ui/DesignSystem";
 
 export function FooterSection() {
-  const rootRef = useRef(null);
-  useReveal(rootRef);
-
+  const sample = CONTACT.email.endsWith("@example.com");
   return (
-    <Box
-      ref={rootRef}
-      component="footer"
-      id="contact"
-      dir="rtl"
-      sx={{ bgcolor: T.dark, color: "#f1e9df", pt: { xs: 8, md: 12 }, pb: 4 }}
-    >
-      <Box sx={WRAP}>
-        <Box
-          sx={{
-            display: "grid",
-            gap: { xs: 6, md: 8 },
-            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1.3fr 0.8fr 1fr 1fr" },
-          }}
-        >
-          <Box data-reveal="">
-            <Brand
-              color="#f1e9df"
-              markColor={T.accent}
-              onClick={(e) => {
-                e.preventDefault();
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            />
-            <Typography sx={{ mt: 2.5, maxWidth: 320, lineHeight: 2.1, color: MUTED }}>
-              تأمین پراکسیدهای آلی و رزین‌های پلی‌استر غیراشباع برای صنعت.
-            </Typography>
-          </Box>
-
-          <Box data-reveal="" data-delay="0.08" component="nav" aria-label="پیوندهای سریع">
-            <Label>دسترسی سریع</Label>
-            <Box sx={{ display: "grid", gap: 0.5 }}>
-              {MENU.filter((m) => m.id !== "contact").map((m) => (
-                <Box
-                  key={m.id}
-                  component="a"
-                  href={`/#${m.id}`}
-                  onClick={scrollToId(m.id)}
-                  sx={{
-                    width: "fit-content",
-                    color: "inherit",
-                    textDecoration: "none",
-                    lineHeight: 2.1,
-                    "&:hover": { color: T.accent },
-                    "&:focus-visible": { outline: `2px solid ${T.accent}`, outlineOffset: 4 },
-                  }}
-                >
-                  {m.label}
-                </Box>
-              ))}
-            </Box>
-          </Box>
-
-          <Box data-reveal="" data-delay="0.16">
-            <Label>نشانی</Label>
-            <Typography component="address" sx={{ fontStyle: "normal", lineHeight: 2.1 }}>
-              {CONTACT.address}
-            </Typography>
-          </Box>
-
-          <Box data-reveal="" data-delay="0.24">
-            <Label>تماس</Label>
-            <Box sx={{ display: "grid", gap: 0.5, justifyItems: "start" }}>
-              {CONTACT.phones.map((p) => (
-                <Box
-                  key={p.tel}
-                  component="a"
-                  href={`tel:${p.tel}`}
-                  sx={{
-                    ...ltr,
-                    color: "inherit",
-                    textDecoration: "none",
-                    fontSize: "1.15rem",
-                    lineHeight: 2,
-                    "&:hover": { color: T.accent },
-                    "&:focus-visible": { outline: `2px solid ${T.accent}`, outlineOffset: 4 },
-                  }}
-                >
-                  {p.label}
-                </Box>
-              ))}
-              {CONTACT.email && (
-                <Box
-                  component="a"
-                  href={`mailto:${CONTACT.email}`}
-                  sx={{
-                    ...ltr,
-                    color: MUTED,
-                    textDecoration: "none",
-                    "&:hover": { color: T.accent },
-                    "&:focus-visible": { outline: `2px solid ${T.accent}`, outlineOffset: 4 },
-                  }}
-                >
-                  {CONTACT.email}
-                </Box>
+    <footer id="contact" className="site-footer">
+      <div className="container">
+        <div className="footer-invitation" data-enter>
+          <div>
+            <Eyebrow light>راه‌های ارتباط با آویژه</Eyebrow>
+            <h2>
+              گفت‌وگو،
+              <br />
+              شروع اتفاق‌های خوب.
+            </h2>
+          </div>
+          <div className="footer-invitation-aside">
+            <p>
+              برای شناخت محصولات و مطرح کردن نیازهای تولیدتان، با پویا شیمی
+              آویژه در ارتباط باشید.
+            </p>
+            <span className="footer-monogram" aria-hidden="true">
+              آویژه
+            </span>
+          </div>
+        </div>
+        <div className="footer-grid">
+          <div className="footer-brand">
+            <Wordmark light />
+            <p>رزین‌های پلی‌استر غیراشباع و پراکسیدهای آلی؛ همراه با صنعت.</p>
+            <span dir="rtl">مواد، آدم‌ها، امکان‌ها.</span>
+          </div>
+          <nav aria-label="دسترسی سریع">
+            <h3>دنیای آویژه</h3>
+            {NAV_ITEMS.filter((item) => item.id !== "contact").map((item) => (
+              <Link to={`/#${item.id}`} key={item.id}>
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          <div className="footer-contact">
+            <h3>راه‌های ارتباطی</h3>
+            {CONTACT.phones.map((phone) => (
+              <div className="contact-line" key={phone.tel}>
+                <Icon name="phone" size={18} />
+                {sample ? (
+                  <span dir="ltr">{phone.label}</span>
+                ) : (
+                  <a href={`tel:${phone.tel}`} dir="ltr">
+                    {phone.label}
+                  </a>
+                )}
+              </div>
+            ))}
+            <div className="contact-line">
+              <Icon name="mail" size={18} />
+              {sample ? (
+                <span dir="ltr">{CONTACT.email}</span>
+              ) : (
+                <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
               )}
-            </Box>
-          </Box>
-        </Box>
-
-        <Box
-          data-line=""
-          sx={{ mt: { xs: 7, md: 10 }, height: "1px", bgcolor: "rgba(241,233,223,.18)" }}
-        />
-        <Box
-          sx={{
-            mt: 3,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 2,
-            flexWrap: "wrap",
-          }}
-        >
-          <Typography sx={{ fontSize: "0.8rem", color: "rgba(241,233,223,.55)" }}>
-            کلیه حقوق برای پویا شیمی آویژه محفوظ است. {fa(1405)}
-          </Typography>
-          <Box
-            component="button"
+            </div>
+            {sample && (
+              <small className="contact-placeholder-note">
+                اطلاعات تماس نمونه است و پیش از انتشار تکمیل می‌شود.
+              </small>
+            )}
+          </div>
+          <div className="footer-address">
+            <h3>اینجا آویژه است</h3>
+            <div className="contact-line">
+              <Icon name="location" size={20} />
+              <address>{CONTACT.address}</address>
+            </div>
+            <span className="footer-location-word" dir="rtl">
+              پیوندی از
+              <br />
+              جنس شیمی.
+            </span>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <p>© ۱۴۰۵ پویا شیمی آویژه. تمامی حقوق محفوظ است.</p>
+          <button
+            className="back-to-top"
             type="button"
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            sx={{
-              border: 0,
-              bgcolor: "transparent",
-              color: "inherit",
-              font: "inherit",
-              fontSize: "0.85rem",
-              cursor: "pointer",
-              "&:hover": { color: T.accent },
-              "&:focus-visible": { outline: `2px solid ${T.accent}`, outlineOffset: 4 },
-            }}
+            onClick={() =>
+              window.scrollTo({
+                top: 0,
+                behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+                  .matches
+                  ? "instant"
+                  : "smooth",
+              })
+            }
           >
-            بازگشت به بالا ↑
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+            بازگشت به بالا
+            <Icon name="up" size={19} />
+          </button>
+        </div>
+      </div>
+    </footer>
   );
 }

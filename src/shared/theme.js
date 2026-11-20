@@ -1,18 +1,24 @@
-// Single source of truth for colours / layout, shared by every section.
-// Same palette as the Hero so the whole site feels like one piece.
 export const T = {
-  bg: "#faf8f6",
-  bgAlt: "#f3eee8",
-  frame: "#d8cdc0",
-  text: "#3a2a1f",
-  muted: "#5d4d41",
-  accent: "#c8ab85",
-  accentDark: "#86683f", // readable on light backgrounds (labels)
-  dark: "#241a12",
-  line: "rgba(58,42,31,.16)",
+  bg: "#f6f7fb",
+  bgAlt: "#edf0f6",
+  frame: "#e1e7ef",
+  text: "#162733",
+  muted: "#647284",
+  accent: "#0751ff",
+  accentDark: "#0649dc",
+  dark: "#142530",
+  line: "rgba(22,39,51,.12)",
 };
-
-export const WRAP = { maxWidth: 1240, mx: "auto", px: { xs: 3, md: 6 } };
-
+export const WRAP = { maxWidth: 1360, mx: "auto", px: { xs: 2.5, md: 6 } };
 const FA_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
 export const fa = (n) => String(n).replace(/\d/g, (d) => FA_DIGITS[d]);
+
+export const normalizeSearch = (value) =>
+  String(value)
+    .replace(/[۰-۹]/g, (digit) => FA_DIGITS.indexOf(digit))
+    .replace(/[٠-٩]/g, (digit) => "٠١٢٣٤٥٦٧٨٩".indexOf(digit))
+    .replace(/[يى]/g, "ی")
+    .replace(/ك/g, "ک")
+    .replace(/\u200c/g, " ")
+    .toLocaleLowerCase("fa")
+    .trim();
