@@ -26,10 +26,10 @@ export function FooterSection() {
       component="footer"
       id="contact"
       dir="rtl"
-      sx={{ bgcolor: T.dark, color: "#f1e9df", pt: { xs: 9, md: 13 }, pb: { xs: 110, md: 4 }, overflow: "hidden" }}
+      sx={{ bgcolor: T.dark, color: "#f1e9df", pt: { xs: 7, md: 12 }, pb: { xs: "calc(92px + env(safe-area-inset-bottom, 0px))", md: 4 }, overflow: "hidden" }}
     >
       <Box sx={WRAP}>
-        <Box data-reveal="" sx={{ pb: { xs: 7, md: 11 }, mb: { xs: 7, md: 10 }, borderBottom: "1px solid rgba(255,255,255,.15)", display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 3, flexWrap: "wrap" }}>
+        <Box data-reveal="" sx={{ pb: { xs: 5, md: 9 }, mb: { xs: 5, md: 8 }, borderBottom: "1px solid rgba(255,255,255,.15)", display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 3, flexWrap: "wrap" }}>
           <Box sx={{ maxWidth: 800 }}>
             <Typography sx={{ color: T.accent, fontWeight: 800, fontSize: ".8rem", mb: 2 }}>شروع یک همکاری تازه</Typography>
             <Typography component="h2" sx={{ color: "#f7f4ee", fontWeight: 800, letterSpacing: "-.035em", lineHeight: 1.55, fontSize: { xs: "clamp(2rem, 8vw, 3rem)", md: "clamp(3rem, 5vw, 5rem)" } }}>

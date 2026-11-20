@@ -213,6 +213,11 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
       introPlayedRef.current = true;
       busyRef.current = true;
       const frame = frameRef.current;
+      if (!frame) {
+        setIntroDone(true);
+        busyRef.current = false;
+        return;
+      }
       const image = frame.querySelector("img");
       const header = frame.querySelector("header");
       const track = fillRef.current.parentElement;
@@ -452,9 +457,8 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
         color: T.text,
         fontFamily: FONT,
         "& .MuiTypography-root, & .MuiButton-root": { fontFamily: "inherit" },
-        height: { xs: "auto", md: "100vh" },
-        "@supports (height: 100svh)": { height: { xs: "auto", md: "100svh" } },
-        minHeight: { xs: 0, md: 640 },
+        height: { xs: "auto", md: "100dvh" },
+        minHeight: { xs: 0, md: 600 },
         px: { xs: 1.5, md: 0 }, pt: { xs: 1.5, md: 0 }, pb: { xs: 2, md: 0 },
       }}
     >
