@@ -18,8 +18,6 @@ export function IntroduceSection() {
   const wrapRef = useRef(null);
   const videoRef = useRef(null);
   const [muted, setMuted] = useState(true);
-  const [playing, setPlaying] = useState(false);
-  const userPaused = useRef(false);
 
   useReveal(rootRef);
 
@@ -27,7 +25,6 @@ export function IntroduceSection() {
   useGSAP(
     () => {
       if (prefersReducedMotion()) return;
-      const mobile = window.matchMedia("(max-width: 899px)").matches;
       const st = {
         trigger: wrapRef.current,
         start: "top 92%",
@@ -36,8 +33,8 @@ export function IntroduceSection() {
       };
       gsap.fromTo(
         wrapRef.current,
-        { clipPath: mobile ? "inset(0% 4% round 28px)" : "inset(0% 9% round 28px)" },
-        { clipPath: mobile ? "inset(0% 0% round 28px)" : "inset(0% 0% round 0px)", ease: "none", scrollTrigger: st },
+        { clipPath: "inset(0% 9% round 28px)" },
+        { clipPath: "inset(0% 0% round 0px)", ease: "none", scrollTrigger: st },
       );
       gsap.fromTo(
         videoRef.current,
@@ -53,11 +50,7 @@ export function IntroduceSection() {
     const v = videoRef.current;
     if (!v) return;
     const io = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting && !userPaused.current && !prefersReducedMotion()) {
-          v.play().then(() => setPlaying(true)).catch(() => setPlaying(false));
-        } else { v.pause(); setPlaying(false); }
-      },
+      ([e]) => (e.isIntersecting ? v.play().catch(() => {}) : v.pause()),
       { threshold: 0.25 },
     );
     io.observe(v);
@@ -71,7 +64,7 @@ export function IntroduceSection() {
       id="about"
       dir="rtl"
       aria-labelledby="about-title"
-      sx={{ bgcolor: T.bg, color: T.text, pt: { xs: 9, md: 15 }, pb: { xs: 2, md: 0 } }}
+      sx={{ bgcolor: T.bg, color: T.text, pt: { xs: 9, md: 15 } }}
     >
       <Box
         sx={{
@@ -99,28 +92,15 @@ export function IntroduceSection() {
         </Typography>
       </Box>
 
-      <Box data-reveal="" sx={{ ...WRAP, mt: { xs: 5, md: 8 } }}>
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: { xs: 1, md: 2 }, borderTop: `1px solid ${T.line}`, pt: { xs: 2.5, md: 3.5 } }}>
-          {["شناخت نیاز", "انتخاب آگاهانه", "مسیر تأمین"].map((step, i) => (
-            <Box key={step} sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 1.1 }}>
-              <Typography sx={{ fontWeight: 900, fontSize: ".8rem", color: T.accentDark, direction: "ltr" }}>{String(i+1).padStart(2,"0")}</Typography>
-              <Typography sx={{ fontSize: { xs: ".78rem", md: "1rem" }, fontWeight: 700, lineHeight: 1.8 }}>{step}</Typography>
-            </Box>
-          ))}
-        </Box>
-      </Box>
-
       {/* Full-width video */}
       <Box
         ref={wrapRef}
         sx={{
           position: "relative",
           mt: { xs: 6, md: 10 },
-          mx: { xs: 1.5, md: 0 },
-          width: { xs: "calc(100% - 24px)", md: "100%" },
-          height: { xs: "min(120vw, 510px)", md: "min(82vh, 56vw)" },
-          minHeight: 320,
-          borderRadius: { xs: "28px", md: 0 },
+          width: "100%",
+          height: { xs: "62vw", md: "min(82vh, 56vw)" },
+          minHeight: 280,
           overflow: "hidden",
           bgcolor: T.dark,
         }}
@@ -135,27 +115,8 @@ export function IntroduceSection() {
           playsInline
           preload="metadata"
           aria-label="ویدیوی معرفی شرکت"
-          onPlay={() => setPlaying(true)}
-          onPause={() => setPlaying(false)}
           sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
         />
-        <Box sx={{ position: "absolute", inset: 0, background: "linear-gradient(to top,rgba(12,24,18,.58),transparent 55%)", pointerEvents: "none" }} />
-        <Box sx={{ position: "absolute", top: { xs: 20, md: 32 }, right: { xs: 20, md: 40 }, color: "white", display: "flex", alignItems: "center", gap: 1, border: "1px solid rgba(255,255,255,.38)", borderRadius: 99, px: 1.75, py: 1, backdropFilter: "blur(9px)" }}>
-          <Box component="span" sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: T.accent }} />
-          <Typography sx={{ color: "inherit", fontWeight: 700, fontSize: ".76rem" }}>داستان آویژه</Typography>
-        </Box>
-        <Box sx={{ position: "absolute", bottom: { xs: 82, md: 96 }, right: { xs: 20, md: 40 }, left: 20, color: "#fff", pointerEvents: "none" }}>
-          <Typography sx={{ fontSize: { xs: "1.75rem", md: "3rem" }, fontWeight: 800, lineHeight: 1.5, color: "inherit" }}>همراه صنعت، در مسیر ساختن.</Typography>
-        </Box>
-        <Box component="button" type="button" onClick={() => {
-          const v = videoRef.current;
-          if (!v) return;
-          if (v.paused) { userPaused.current = false; v.play().catch(() => {}); }
-          else { userPaused.current = true; v.pause(); }
-        }} aria-label={playing ? "توقف ویدیو" : "پخش ویدیو"}
-          sx={{ position: "absolute", bottom: { xs: 17, md: 27 }, right: { xs: 17, md: 40 }, minHeight: 44, px: 2, borderRadius: 99, border: "1px solid rgba(255,255,255,.4)", background: "rgba(12,24,18,.42)", backdropFilter: "blur(12px)", color: "white", font: "inherit", fontSize: ".82rem", fontWeight: 700, cursor: "pointer" }}>
-          {playing ? "Ⅱ  مکث" : "▶  پخش ویدیو"}
-        </Box>
         <Box
           component="button"
           type="button"
@@ -163,9 +124,8 @@ export function IntroduceSection() {
           aria-label={muted ? "پخش با صدا" : "قطع صدا"}
           sx={{
             position: "absolute",
-            bottom: { xs: 17, md: 27 },
-            insetInlineStart: { xs: 17, md: 40 },
-            minHeight: 44,
+            bottom: { xs: 14, md: 28 },
+            insetInlineStart: { xs: 14, md: 40 },
             px: 2,
             py: 0.75,
             border: "1px solid rgba(255,255,255,.55)",

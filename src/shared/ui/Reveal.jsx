@@ -2,7 +2,7 @@ import { Box, Typography } from "@mui/material";
 import { T } from "../theme";
 
 /** Clips its child so useReveal can slide it up from below (data-mask). */
-export function Mask({ children, sx = {} }) {
+export function Mask({ children, sx }) {
   return (
     <Box data-mask="" sx={{ overflow: "hidden", pb: "0.2em", ...sx }}>
       {children}
@@ -19,13 +19,13 @@ export function SectionLabel({ children, light = false }) {
     >
       <Box
         component="span"
-        sx={{ width: 26, height: 3, borderRadius: 9, bgcolor: T.accent }}
+        sx={{ width: 36, height: "1.5px", bgcolor: T.accent }}
       />
       <Typography
         component="span"
         sx={{
-          fontSize: "0.79rem",
-          fontWeight: 800,
+          fontSize: "0.85rem",
+          fontWeight: 600,
           letterSpacing: 0,
           color: light ? T.accent : T.accentDark,
         }}
@@ -43,10 +43,9 @@ export function SectionTitle({ id, children, color = T.text }) {
         id={id}
         component="h2"
         sx={{
-          fontSize: { xs: "clamp(1.9rem, 7.2vw, 2.6rem)", md: "clamp(2.8rem, 4vw, 4.3rem)" },
-          fontWeight: 800,
-          letterSpacing: "-.035em",
-          lineHeight: 1.45,
+          fontSize: { xs: "1.8rem", md: "3rem" },
+          fontWeight: 600,
+          lineHeight: 1.5,
           color,
         }}
       >

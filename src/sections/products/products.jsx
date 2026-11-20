@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useReveal } from "../../shared/useReveal";
+import { LineFrame } from "../../shared/ui/LineFrame";
 import { SectionLabel, SectionTitle } from "../../shared/ui/Reveal";
 import { T, WRAP, fa } from "../../shared/theme";
 import { CATEGORIES, getCategory } from "../../data/products";
@@ -13,37 +14,95 @@ function ProductCard({ cat, index, onOpen }) {
   const count = cat.products.length;
   return (
     <Box
-      component="a" href={`/#products/${cat.slug}`}
-      onClick={(e) => { e.preventDefault(); onOpen(cat.slug, e.currentTarget.querySelector("[data-card-img]")); }}
-      data-reveal="" data-delay={index * 0.12} aria-label={`مشاهده ${cat.name}`}
+      component="a"
+      href={`/#products/${cat.slug}`}
+      onClick={(e) => {
+        e.preventDefault();
+        onOpen(cat.slug, e.currentTarget.querySelector("[data-card-img]"));
+      }}
+      data-reveal=""
+      data-delay={index * 0.15}
+      aria-label={cat.name}
       sx={{
-        display: "block", flex: { xs: "0 0 min(78vw, 330px)", md: "initial" },
-        minWidth: 0, scrollSnapAlign: "start", color: "inherit", textDecoration: "none",
+        display: "block",
+        color: "inherit",
+        textDecoration: "none",
+        // second card sits lower on desktop: a calm, editorial rhythm
         mt: { md: index === 1 ? 10 : 0 },
-        "&:hover .product-img": { transform: "scale(1.075)" },
-        "&:hover .product-arrow": { transform: "translateX(-5px) rotate(-45deg)", bgcolor: T.accent },
-        "&:active .product-img": { transform: "scale(1.035)" },
-        "&:focus-visible": { outline: `2px solid ${T.accentDark}`, outlineOffset: 5, borderRadius: "26px" },
+        "&:hover .p-img": { transform: "scale(1.05)" },
+        "&:hover .p-arrow": { bgcolor: T.text, color: T.bg, transform: "rotate(-45deg)" },
+        "&:focus-visible": { outline: `2px solid ${T.accent}`, outlineOffset: 10 },
       }}
     >
-      <Box sx={{ position: "relative", overflow: "hidden", bgcolor: T.frame, aspectRatio: { xs: "4 / 4.7", md: "4 / 4.75" }, borderRadius: { xs: "23px", md: "29px" } }}>
+      <LineFrame flip={index === 1} offset={14}>
         <Box
-          data-card-img={cat.slug} className="product-img" component="img" src={cat.image}
-          alt="" loading="lazy" sx={{ display: "block", width: "100%", height: "100%", objectFit: "cover", transition: `transform 1s ${T.ease}` }}
-        />
-        <Box sx={{ position: "absolute", inset: "40% 0 0", background: "linear-gradient(to top,rgba(10,18,14,.72),transparent)" }} />
-        <Box sx={{ position: "absolute", right: { xs: 17, md: 24 }, left: { xs: 17, md: 24 }, top: { xs: 17, md: 24 }, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Box sx={{ border: "1px solid rgba(255,255,255,.5)", borderRadius: 99, px: 1.5, py: .6, color: "#fff", backdropFilter: "blur(12px)", bgcolor: "rgba(0,0,0,.15)", fontSize: ".72rem", fontWeight: 700 }}>{count === 1 ? "یک محصول" : `${fa(count)} گرید`}</Box>
-          <Typography sx={{ color: "rgba(255,255,255,.85)", fontWeight: 800, fontSize: ".85rem" }}>{fa(String(index+1).padStart(2,"0"))}</Typography>
+          sx={{
+            position: "relative",
+            aspectRatio: { xs: "4 / 4.6", md: "4 / 5" },
+            overflow: "hidden",
+            bgcolor: T.frame,
+          }}
+        >
+          <Box
+            className="p-img"
+            data-card-img={cat.slug}
+            component="img"
+            src={cat.image}
+            alt=""
+            loading="lazy"
+            sx={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+              transition: "transform 1.1s cubic-bezier(.2,.7,.2,1)",
+            }}
+          />
         </Box>
-        <Box sx={{ position: "absolute", right: { xs: 19, md: 29 }, left: { xs: 19, md: 29 }, bottom: { xs: 20, md: 31 } }}>
-          <Typography component="h3" sx={{ color: "white", fontSize: { xs: "1.45rem", md: "2.2rem" }, lineHeight: 1.5, fontWeight: 800 }}>{cat.name}</Typography>
-          <Typography sx={{ mt: .5, direction: "ltr", textAlign: "right", color: "rgba(255,255,255,.76)", fontSize: ".75rem", letterSpacing: ".07em" }}>{cat.latin}</Typography>
+      </LineFrame>
+
+      <Box
+        sx={{
+          mt: 4,
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 2,
+        }}
+      >
+        <Box>
+          <Typography
+            component="h3"
+            sx={{ fontSize: { xs: "1.3rem", md: "1.7rem" }, fontWeight: 600, lineHeight: 1.6 }}
+          >
+            {cat.name}
+          </Typography>
+          <Typography
+            sx={{ mt: 0.5, color: T.muted, fontSize: "0.9rem", direction: "ltr", textAlign: "right" }}
+          >
+            {cat.latin}
+          </Typography>
+          <Typography sx={{ mt: 1.5, color: T.accentDark, fontSize: "0.9rem", fontWeight: 600 }}>
+            {count === 1 ? "یک محصول" : `${fa(count)} گرید`}
+          </Typography>
         </Box>
-      </Box>
-      <Box sx={{ pt: { xs: 2, md: 2.5 }, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
-        <Typography sx={{ color: T.text, fontWeight: 700, fontSize: { xs: ".92rem", md: "1.05rem" } }}>مشاهده گریدها و کاربردها</Typography>
-        <Box className="product-arrow" aria-hidden="true" sx={{ width: 42, height: 42, border: `1px solid ${T.line}`, display: "grid", placeItems: "center", borderRadius: "50%", flexShrink: 0, transition: `all .35s ${T.ease}`, fontSize: "1.3rem" }}>←</Box>
+        <Box
+          className="p-arrow"
+          aria-hidden="true"
+          sx={{
+            width: 52,
+            height: 52,
+            flexShrink: 0,
+            display: "grid",
+            placeItems: "center",
+            border: `1.5px solid ${T.text}`,
+            borderRadius: "50%",
+            fontSize: "1.3rem",
+            transition: "all .5s cubic-bezier(.2,.7,.2,1)",
+          }}
+        >
+          ←
+        </Box>
       </Box>
     </Box>
   );
@@ -91,9 +150,8 @@ export function ProductsSection() {
       else navigate({ pathname: "/", hash: "#products" }, { replace: true, preventScrollReset: true });
       pushedRef.current = false;
       after?.();
-      requestAnimationFrame(() => document.querySelector(`[data-card-img="${shown}"]`)?.closest('a')?.focus({ preventScroll: true }));
     },
-    [navigate, shown],
+    [navigate],
   );
 
   const cat = shown ? getCategory(shown) : null;
@@ -111,33 +169,21 @@ export function ProductsSection() {
       <Box sx={WRAP}>
         <Box sx={{ maxWidth: 640, mb: { xs: 7, md: 12 } }}>
           <SectionLabel>محصولات</SectionLabel>
-          <SectionTitle id="products-title">مواد اولیه، برای ایده‌های بزرگ.</SectionTitle>
+          <SectionTitle id="products-title">دو خانواده محصول، یک مسیر تأمین</SectionTitle>
           <Typography
             data-reveal=""
             sx={{ mt: 2.5, color: T.muted, lineHeight: 2.1, fontSize: { xs: "0.95rem", md: "1.05rem" } }}
           >
-            خانواده محصول را انتخاب کنید؛ گریدها، ویژگی‌ها و کاربردها بدون خروج از صفحه در دسترس شماست.
+            روی هر محصول کلیک کنید تا گریدها، ویژگی‌ها و کاربردها در همین‌جا باز شود.
           </Typography>
         </Box>
 
-        <Box sx={{ display: { xs: "flex", md: "none" }, alignItems: "center", justifyContent: "space-between", mb: 2.5 }}>
-          <Typography sx={{ fontWeight: 700, fontSize: ".8rem" }}>کاتالوگ تعاملی</Typography>
-          <Typography sx={{ color: T.muted, fontSize: ".75rem" }}>برای دیدن بیشتر ورق بزنید ←</Typography>
-        </Box>
         <Box
-          data-snap-scroll=""
-          aria-label="دسته‌بندی محصولات؛ برای جابه‌جایی به طرفین بکشید"
           sx={{
-            display: { xs: "flex", md: "grid" },
+            display: "grid",
             gridTemplateColumns: { md: "1fr 1fr" },
-            gap: { xs: 2, md: 10 },
-            overflowX: { xs: "auto", md: "visible" },
-            overflowY: "hidden",
-            scrollSnapType: { xs: "x mandatory", md: "none" },
-            scrollPaddingInline: { xs: 24, md: 0 },
-            overscrollBehaviorX: "contain",
-            px: { xs: 3, md: 0 }, mx: { xs: -3, md: 0 },
-            pb: { xs: 2.5, md: 0 },
+            gap: { xs: 8, md: 10 },
+            px: { xs: 1.5, md: 0 }, // room for the outside line-frame on small screens
           }}
         >
           {CATEGORIES.map((c, i) => (

@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Box, Dialog, IconButton, Typography } from "@mui/material";
+import { Box, Dialog, IconButton } from "@mui/material";
 import { gsap, useGSAP, prefersReducedMotion } from "../gsap";
 import { T, fa } from "../theme";
 
@@ -32,14 +32,14 @@ function MenuContent({ onPick, onClose }) {
     <Box
       ref={ref}
       dir="rtl"
-      sx={{ minHeight: "100%", display: "flex", flexDirection: "column", px: { xs: 3.5, md: 8 }, py: { xs: 3.5, md: 5 }, background: "radial-gradient(ellipse at 12% 92%, rgba(237,136,95,.13), transparent 48%)" }}
+      sx={{ minHeight: "100%", display: "flex", flexDirection: "column", px: { xs: 3.5, md: 8 }, py: 3 }}
     >
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Typography sx={{ fontWeight: 900, fontSize: ".78rem", color: T.accentDark, letterSpacing: ".06em" }}>AVIZHE — EXPLORE</Typography>
-        <IconButton onClick={onClose} aria-label="بستن منو" sx={{ width: 48, height: 48, color: T.text, border: `1px solid ${T.line}`, bgcolor: "white", fontSize: "1.25rem" }}>✕</IconButton>
+      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+        <IconButton onClick={onClose} aria-label="بستن منو" sx={{ color: T.text, fontSize: "1.6rem" }}>
+          ✕
+        </IconButton>
       </Box>
-      <Box component="nav" aria-label="فهرست اصلی" sx={{ my: "auto", py: 5 }}>
-        <Typography sx={{ color: T.muted, fontWeight: 700, fontSize: ".8rem", mb: 3 }}>به کجا می‌خواهید بروید؟</Typography>
+      <Box component="nav" sx={{ my: "auto" }}>
         {MENU.map((m, i) => (
           <Box key={m.id} sx={{ overflow: "hidden", borderBottom: `1px solid ${T.line}` }}>
             <Box
@@ -54,13 +54,11 @@ function MenuContent({ onPick, onClose }) {
                 display: "flex",
                 alignItems: "baseline",
                 gap: 3,
-                py: { xs: 2.4, md: 2.5 },
+                py: { xs: 2, md: 2.5 },
                 color: T.text,
                 textDecoration: "none",
-                fontSize: { xs: "clamp(1.75rem, 7.7vw, 2.6rem)", md: "3.7rem" },
-                fontWeight: 800,
-                transition: "color .25s, transform .35s",
-                "&:active": { transform: "translateX(-6px)" },
+                fontSize: { xs: "1.8rem", md: "3.2rem" },
+                fontWeight: 600,
                 "&:hover": { color: T.accentDark },
                 "&:focus-visible": { outline: `2px solid ${T.accent}`, outlineOffset: -2 },
               }}
@@ -69,14 +67,9 @@ function MenuContent({ onPick, onClose }) {
                 {fa(`0${i + 1}`)}
               </Box>
               {m.label}
-              <Box component="span" aria-hidden="true" sx={{ mr: "auto", fontSize: "1rem", fontWeight: 600, color: T.accentDark }}>↖</Box>
             </Box>
           </Box>
         ))}
-      </Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", borderTop: `1px solid ${T.line}`, pt: 2.5, gap: 2 }}>
-        <Typography sx={{ color: T.muted, fontSize: ".78rem" }}>پویا شیمی آویژه</Typography>
-        <Typography sx={{ color: T.muted, fontSize: ".72rem", direction: "ltr" }}>MATERIALS. POSSIBILITIES.</Typography>
       </Box>
     </Box>
   );
@@ -87,7 +80,7 @@ export function MenuDialog({ open, onClose }) {
     onClose();
     // wait until the dialog released the body scroll lock
     setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth" });
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
     }, 350);
   };
   return (

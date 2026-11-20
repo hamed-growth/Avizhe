@@ -17,14 +17,14 @@ const HEADER_TONE = "light"; // "light" = white header + soft scrim (safe on any
 
 const FONT = '"Estedad", "Vazirmatn", Tahoma, sans-serif';
 const T = {
-  bg: "#fbfaf7",
-  frame: "#ddd7ce",
-  text: "#252923",
-  muted: "#646a61",
-  accent: "#ed885f",
-  accentOnImage: "#ffd0b2",
-  track: "rgba(237,136,95,.3)",
-  shadow: "rgba(20,32,24,.22)",
+  bg: "#faf8f6",
+  frame: "#d8cdc0",
+  text: "#3a2a1f",
+  muted: "#5d4d41",
+  accent: "#c8ab85",
+  accentOnImage: "#e6cba3",
+  track: "rgba(200,171,133,.28)",
+  shadow: "rgba(86,60,38,.16)",
 };
 const headerColor = HEADER_TONE === "light" ? "#fff" : T.text;
 
@@ -74,7 +74,6 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
   const [bgSlide, setBgSlide] = useState(0);
   const [paused, setPaused] = useState(false);
   const [touching, setTouching] = useState(false);
-  const [inView, setInView] = useState(true);
   const [videoOpen, setVideoOpen] = useState(false);
   const [introDone, setIntroDone] = useState(false);
   const introPlayedRef = useRef(false);
@@ -213,11 +212,6 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
       introPlayedRef.current = true;
       busyRef.current = true;
       const frame = frameRef.current;
-      if (!frame) {
-        setIntroDone(true);
-        busyRef.current = false;
-        return;
-      }
       const image = frame.querySelector("img");
       const header = frame.querySelector("header");
       const track = fillRef.current.parentElement;
@@ -400,30 +394,21 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
     if (!introDone) return;
     const tween = progressRef.current;
     if (!tween) return;
-    if (paused || touching || !inView) tween.pause();
+    if (paused || touching) tween.pause();
     else tween.resume();
-  }, [paused, touching, inView, activeSlide, reduceMotion, videoOpen, introDone]);
-
-  // Keep the visual timer and preview video idle when the hero is off-screen.
-  useEffect(() => {
-    const hero = rootRef.current;
-    if (!hero || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting), { threshold: .08 });
-    observer.observe(hero);
-    return () => observer.disconnect();
-  }, []);
+  }, [paused, touching, activeSlide, reduceMotion, videoOpen, introDone]);
 
   /* ---------- Video in the frame ---------- */
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (slides[bgSlide].video && !reduceMotion && !videoOpen && inView) {
+    if (slides[bgSlide].video && !reduceMotion && !videoOpen) {
       video.play().catch(() => {});
     } else {
       video.pause();
       video.currentTime = 0;
     }
-  }, [bgSlide, reduceMotion, videoOpen, inView]);
+  }, [bgSlide, reduceMotion, videoOpen]);
 
   useEffect(
     () => () => {
@@ -457,9 +442,10 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
         color: T.text,
         fontFamily: FONT,
         "& .MuiTypography-root, & .MuiButton-root": { fontFamily: "inherit" },
-        height: { xs: "auto", md: "100dvh" },
-        minHeight: { xs: 0, md: 600 },
-        px: { xs: 1.5, md: 0 }, pt: { xs: 1.5, md: 0 }, pb: { xs: 2, md: 0 },
+        height: "100vh",
+        "@supports (height: 100svh)": { height: "100svh" },
+        minHeight: { xs: 560, md: 640 },
+        // p: { xs: 1.5, md: 3 },
       }}
     >
       <Box
@@ -471,7 +457,7 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
           mx: "auto",
           display: "grid",
           gridTemplateColumns: "1fr",
-          gridTemplateRows: { xs: "minmax(535px, 73svh) auto", md: "minmax(0, 1fr)" },
+          gridTemplateRows: { xs: "minmax(0, 1fr) auto", md: "minmax(0, 1fr)" },
           gap: 1.5,
         }}
       >
@@ -484,8 +470,7 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
             overflow: "hidden",
             height: "100%",
             minHeight: 150,
-            borderRadius: { xs: "26px", md: "0px" },
-            isolation: "isolate",
+            // borderRadius: { xs: "36px", md: "44px" },
             bgcolor: T.frame,
           }}
         >
@@ -559,8 +544,8 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              px: { xs: 2.5, md: 5 },
-              py: { xs: 2.5, md: 3 },
+              px: { xs: 3.5, md: 5 },
+              py: { xs: 2.25, md: 3 },
               color: headerColor,
             }}
           >
@@ -584,8 +569,8 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
                 component="span"
                 aria-hidden="true"
                 sx={{
-                  width: { xs: 36, md: 52 },
-                  height: { xs: 36, md: 52 },
+                  width: { xs: 40, md: 52 },
+                  height: { xs: 40, md: 52 },
                   flexShrink: 0,
                   bgcolor: HEADER_TONE === "light" ? T.accentOnImage : T.text,
                   // Match the palette using the transparent logo as a mask.
@@ -604,8 +589,8 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
               <Typography
                 component="span"
                 sx={{
-                  fontSize: { xs: "0.8rem", md: "1.1rem" },
-                  fontWeight: 800,
+                  fontSize: { xs: "0.85rem", md: "1.1rem" },
+                  fontWeight: 600,
                   lineHeight: 1.8,
                   color: "inherit",
                 }}
@@ -619,16 +604,11 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
               aria-label="منو"
               onClick={onMenuClick}
               sx={{
-                display: "flex",
-                alignItems: "center",
-                gap: 1.25,
-                px: { xs: 1.5, md: 2 },
-                py: { xs: 1, md: 1.25 },
-                minHeight: 44,
-                border: "1px solid rgba(255,255,255,.42)",
-                borderRadius: "999px",
-                bgcolor: "rgba(12,20,16,.15)",
-                backdropFilter: "blur(14px)",
+                display: "grid",
+                gap: "6px",
+                p: 1,
+                border: 0,
+                bgcolor: "transparent",
                 color: "inherit",
                 cursor: "pointer",
                 "&:focus-visible": {
@@ -637,12 +617,13 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
                 },
               }}
             >
-              <Typography component="span" sx={{ fontSize: ".75rem", fontWeight: 700, color: "inherit" }}>فهرست</Typography>
-              <Box sx={{ display: "grid", gap: "5px" }} aria-hidden="true">
-                {[0, 1].map((i) => (
-                  <Box key={i} component="span" sx={{ width: 18, height: 1.5, borderRadius: 2, bgcolor: "currentColor" }} />
-                ))}
-              </Box>
+              {[0, 1, 2].map((i) => (
+                <Box
+                  key={i}
+                  component="span"
+                  sx={{ width: 24, height: 1.5, bgcolor: "currentColor" }}
+                />
+              ))}
             </Box>
           </Box>
 
@@ -652,28 +633,24 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
             sx={{
               position: "absolute",
               zIndex: 5,
-              bottom: { xs: 30, md: 48 },
-              left: { xs: 24, md: "auto" },
-              right: { xs: 24, md: 56 },
+              bottom: { xs: 22, md: 48 },
+              left: { xs: 26, md: "auto" },
+              right: { xs: 26, md: 56 },
               width: { md: "min(560px, 46%)" },
               color: "#fff",
             }}
           >
-            <Typography data-hero-fade="" component="p" sx={{ color: T.accentOnImage, fontWeight: 800, fontSize: ".73rem", letterSpacing: ".12em", mb: 1.25 }}>
-              AVIZHE / MATERIAL SOLUTIONS
-            </Typography>
             <Box sx={{ overflow: "hidden", pb: "0.25em" }}>
               <Typography
                 component="h1"
                 data-hero-title=""
                 sx={{
                   fontSize: {
-                    xs: "clamp(2rem, 7.3vw, 2.9rem)",
-                    md: "clamp(3rem, 4.3vw, 4.6rem)",
+                    xs: "clamp(1.55rem, 6.6vw, 2.05rem)",
+                    md: "3.1rem",
                   },
-                  fontWeight: 800,
-                  letterSpacing: "-.045em",
-                  lineHeight: 1.43,
+                  fontWeight: 400,
+                  lineHeight: 1.5,
                   color: "#fff",
                   textShadow: "0 2px 18px rgba(0,0,0,.28)",
                   willChange: "transform",
@@ -709,8 +686,8 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
                 data-hero-fade=""
                 sx={{
                   color: "rgba(255,255,255,.88)",
-                  fontSize: { xs: "0.88rem", md: "1.05rem" },
-                  lineHeight: { xs: 2, md: 2.1 },
+                  fontSize: { xs: "0.85rem", md: "1.05rem" },
+                  lineHeight: { xs: 1.9, md: 2.1 },
                   display: "-webkit-box",
                   WebkitBoxOrient: "vertical",
                   WebkitLineClamp: { xs: 2, md: 3 },
@@ -720,15 +697,6 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
                 {currentSlide.description}
               </Typography>
             )}
-
-            <Box data-hero-fade="" sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5, mt: { xs: 3.5, md: 4 } }}>
-              <Box component="a" href="#products" sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, minHeight: 46, px: 2.25, borderRadius: 99, bgcolor: T.accent, color: "#1c2622", fontWeight: 800, fontSize: ".87rem", textDecoration: "none", boxShadow: "0 10px 26px rgba(0,0,0,.13)", transition: "transform .25s ease", "&:active": { transform: "scale(.96)" }, "&:hover": { transform: "translateY(-3px)" } }}>
-                کشف محصولات <Box component="span" aria-hidden="true" sx={{ fontSize: "1.2rem" }}>←</Box>
-              </Box>
-              <Typography component="span" sx={{ color: "rgba(255,255,255,.88)", fontSize: ".78rem", fontWeight: 600, direction: "ltr", fontVariantNumeric: "tabular-nums" }}>
-                {String(activeSlide + 1).padStart(2, "0")} / {String(N).padStart(2, "0")}
-              </Typography>
-            </Box>
 
             {currentSlide.fullVideo && (
               <Button
@@ -789,10 +757,6 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
             px: { xs: 0.5, md: 0 },
           }}
         >
-          <Box sx={{ display: { xs: "flex", md: "none" }, alignItems: "center", justifyContent: "space-between", px: 1, mb: .75 }}>
-            <Typography sx={{ fontSize: ".76rem", fontWeight: 800, color: T.text }}>در مسیر آویژه</Typography>
-            <Typography sx={{ fontSize: ".72rem", color: T.muted }}>برای تغییر، لمس یا سوایپ کنید ←</Typography>
-          </Box>
           <Box
             ref={trackRef}
             dir="rtl"
@@ -872,7 +836,7 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
                     border: 0,
                     overflow: "hidden",
                     cursor: "pointer",
-                    borderRadius: { xs: "16px", md: "22px" },
+                    borderRadius: "24px",
                     bgcolor: T.frame,
                     boxShadow: `0 10px 24px ${T.shadow}`,
                     "&:focus-visible": {
@@ -895,8 +859,6 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
                       objectFit: "cover",
                     }}
                   />
-                  <Box aria-hidden="true" sx={{ position: "absolute", inset: "45% 0 0", background: "linear-gradient(to top,rgba(0,0,0,.7),transparent)" }} />
-                  <Typography component="span" sx={{ position: "absolute", bottom: 9, right: 10, left: 6, fontSize: { xs: ".67rem", md: ".76rem" }, fontWeight: 800, color: "#fff", textAlign: "right", textShadow: "0 1px 8px rgba(0,0,0,.4)" }}>{slide.name}</Typography>
                   {slide.video && (
                     <Box
                       component="span"

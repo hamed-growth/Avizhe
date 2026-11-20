@@ -12,7 +12,7 @@ import { T } from "../theme";
  * NOTE: parent must not clip overflow, otherwise the lines are cut.
  */
 export function LineFrame({
-  children = null,
+  children,
   offset = 14,
   flip = false,
   color = T.accent,

@@ -1,21 +1,22 @@
 import { CssBaseline, createTheme, ThemeProvider } from '@mui/material'
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, ScrollRestoration, useParams } from 'react-router-dom'
 import HomePage from './pages/HomePage.jsx'
-import EventPage from './pages/EventPage.jsx'
 
 const theme = createTheme({
-  palette: { primary: { main: "#252923" }, secondary: { main: "#ed885f" }, background: { default: "#fbfaf7" } },
-  shape: { borderRadius: 18 },
   typography: {
-    fontFamily: '"Estedad", "Vazirmatn", Tahoma, sans-serif',
-    button: { textTransform: "none", fontWeight: 700 },
+    fontFamily: '"Estedad", Tahoma, sans-serif',
   },
 })
 
-// Old product URLs now open the in-page explorer.
+// Old detail-page URLs now open the in-page explorers.
 function ProductRedirect() {
   const { category } = useParams()
   return <Navigate to={{ pathname: '/', hash: `#products/${category}` }} replace />
+}
+
+function EventRedirect() {
+  const { year } = useParams()
+  return <Navigate to={{ pathname: '/', hash: `#events/${year}` }} replace />
 }
 
 function RootLayout() {
@@ -33,7 +34,7 @@ const router = createBrowserRouter([
     children: [
       { path: '/', element: <HomePage /> },
       { path: '/products/:category', element: <ProductRedirect /> },
-      { path: '/events/:year', element: <EventPage /> },
+      { path: '/events/:year', element: <EventRedirect /> },
     ],
   },
 ])
