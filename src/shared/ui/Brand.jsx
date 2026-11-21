@@ -5,7 +5,7 @@ import { T } from "../theme";
 export const BRAND = "پویا شیمی آویژه";
 
 /** Logo (tinted through a mask, same trick as the Hero header) + name. */
-export function Brand({ color = T.text, markColor = T.text, to = "/", onClick }) {
+export function Brand({ color = T.text, markColor = T.text, to = "/" }) {
   const mask = {
     maskImage: 'url("/logo.png")',
     maskMode: "alpha",
@@ -21,7 +21,6 @@ export function Brand({ color = T.text, markColor = T.text, to = "/", onClick })
     <Box
       component={Link}
       to={to}
-      onClick={onClick}
       sx={{
         display: "flex",
         alignItems: "center",

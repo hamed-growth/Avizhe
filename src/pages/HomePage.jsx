@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { Box } from "@mui/material";
 import { useLocation } from "react-router-dom";
 import { HeroSection } from "../sections/Hero/hero";
 import { IntroduceSection } from "../sections/introudce/introduce";
@@ -7,46 +8,35 @@ import { EventsSection } from "../sections/events/events";
 import { NewsSection } from "../sections/news/news";
 import { FooterSection } from "../sections/footer/footer";
 import { MenuDialog } from "../shared/ui/MenuDialog";
-import { SiteHeader } from "../shared/ui/DesignSystem";
-import { useScrollMotion } from "../shared/useScrollMotion";
+import { ScrollTrigger } from "../shared/gsap";
+import { MobileDock } from "../shared/ui/MobileDock";
+import { TopProgress } from "../shared/ui/TopProgress";
 
 export default function HomePage() {
-  const rootRef = useRef(null);
-  useScrollMotion(rootRef);
   const [menuOpen, setMenuOpen] = useState(false);
   const { hash } = useLocation();
+
+  // Coming back from a detail page ("/#products"): land on that section.
   useEffect(() => {
-    if (!hash || hash.includes("/")) return;
-    const timer = setTimeout(
-      () =>
-        document
-          .getElementById(hash.slice(1))
-          ?.scrollIntoView({
-            behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-              .matches
-              ? "instant"
-              : "smooth",
-          }),
-      80,
-    );
-    return () => clearTimeout(timer);
+    if (!hash) return;
+    const t = setTimeout(() => {
+      ScrollTrigger.refresh();
+      document.getElementById(hash.slice(1))?.scrollIntoView();
+    }, 120);
+    return () => clearTimeout(t);
   }, [hash]);
+
   return (
-    <div className="site-shell" ref={rootRef}>
-      <div className="scroll-progress" aria-hidden="true"><span className="scroll-progress-fill" /></div>
-      <a className="skip-link" href="#main-content">
-        رفتن به محتوای اصلی
-      </a>
-      <SiteHeader onMenuClick={() => setMenuOpen(true)} menuOpen={menuOpen} />
-      <main id="main-content">
-        <HeroSection />
-        <IntroduceSection />
-        <ProductsSection />
-        <EventsSection />
-        <NewsSection />
-      </main>
+    <Box component="main" sx={{ p: 0, m: 0 }}>
+      <TopProgress />
+      <HeroSection onMenuClick={() => setMenuOpen(true)} />
+      <IntroduceSection />
+      <ProductsSection />
+      <EventsSection />
+      <NewsSection />
       <FooterSection />
       <MenuDialog open={menuOpen} onClose={() => setMenuOpen(false)} />
-    </div>
+      <MobileDock hidden={menuOpen || hash.startsWith("#products/")} />
+    </Box>
   );
 }

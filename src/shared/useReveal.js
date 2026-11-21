@@ -12,11 +12,9 @@ export function useReveal(scopeRef, deps = []) {
     () => {
       const root = scopeRef.current;
       if (!root || prefersReducedMotion()) return;
-      // clamp(): if the element can never reach "start" (it sits at the very bottom of the
-      // page, e.g. the footer), the trigger fires at the max scroll instead of never.
       const at = (el, start = "top 88%") => ({
         trigger: el,
-        start: `clamp(${start})`,
+        start,
         once: true,
       });
 

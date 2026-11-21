@@ -1,4 +1,42 @@
-@import "./design.css";
-@import "./persian.css";
-@import "./typography.css";
-@import "./motion.css";
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+:root {
+  --paper: #fbfaf7;
+  --ink: #252923;
+  --coral: #ed885f;
+  --surface: #f0ede7;
+  --ease-out: cubic-bezier(.22,1,.36,1);
+  color-scheme: light;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+body { margin: 0; min-width: 320px; background: var(--paper); color: var(--ink); }
+html, body, #app { min-height: 100%; font-family: "Estedad", "Vazirmatn", Tahoma, sans-serif; }
+button, input, textarea, select { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { touch-action: manipulation; }
+a { text-underline-offset: 4px; }
+::selection { background: #f4b99d; color: var(--ink); }
+:focus-visible { outline: 2px solid #be5935; outline-offset: 4px; }
+img, video { max-width: 100%; }
+[data-snap-scroll] { scrollbar-width: none; -ms-overflow-style: none; }
+[data-snap-scroll]::-webkit-scrollbar { display: none; }
+@media (max-width: 899.95px) {
+  html { scroll-padding-top: 22px; }
+  body { padding-bottom: env(safe-area-inset-bottom, 0px); }
+  [data-mobile-dock] { -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

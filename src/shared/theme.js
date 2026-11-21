@@ -1,24 +1,18 @@
+// Avizhe / Industrial Editorial — shared, mobile-first design tokens.
 export const T = {
-  bg: "#f6f7fb",
-  bgAlt: "#edf0f6",
-  frame: "#e1e7ef",
-  text: "#162733",
-  muted: "#647284",
-  accent: "#0751ff",
-  accentDark: "#0649dc",
-  dark: "#142530",
-  line: "rgba(22,39,51,.12)",
+  bg: "#fbfaf7",
+  bgAlt: "#f0ede7",
+  frame: "#ddd7ce",
+  text: "#252923",
+  muted: "#646a61",
+  accent: "#ed885f",
+  accentDark: "#a94a2d",
+  dark: "#1c2622",
+  line: "rgba(37,41,35,.14)",
+  white: "#ffffff",
+  radius: 26,
+  ease: "cubic-bezier(.22,1,.36,1)",
 };
-export const WRAP = { maxWidth: 1360, mx: "auto", px: { xs: 2.5, md: 6 } };
+export const WRAP = { maxWidth: 1240, mx: "auto", px: { xs: 3, sm: 4, md: 6 } };
 const FA_DIGITS = "۰۱۲۳۴۵۶۷۸۹";
 export const fa = (n) => String(n).replace(/\d/g, (d) => FA_DIGITS[d]);
-
-export const normalizeSearch = (value) =>
-  String(value)
-    .replace(/[۰-۹]/g, (digit) => FA_DIGITS.indexOf(digit))
-    .replace(/[٠-٩]/g, (digit) => "٠١٢٣٤٥٦٧٨٩".indexOf(digit))
-    .replace(/[يى]/g, "ی")
-    .replace(/ك/g, "ک")
-    .replace(/\u200c/g, " ")
-    .toLocaleLowerCase("fa")
-    .trim();
