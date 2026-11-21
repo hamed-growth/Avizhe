@@ -36,7 +36,7 @@ export function FooterSection() {
               آینده‌ی تولید، از یک گفت‌وگو آغاز می‌شود.
             </Typography>
           </Box>
-          {HAS_EMAIL && <Box component="a" href={`mailto:${CONTACT.email}`} sx={{ borderRadius: 99, minHeight: 54, display: "flex", alignItems: "center", gap: 2, px: 3, color: T.dark, bgcolor: T.accent, textDecoration: "none", fontWeight: 800, "&:hover": { bgcolor: "#ffc6a9" } }}>شروع گفت‌وگو <Box component="span" aria-hidden="true">↗</Box></Box>}
+          {HAS_EMAIL && <Box component="a" href={`mailto:${CONTACT.email}`} sx={{ borderRadius: 99, minHeight: 54, display: "flex", alignItems: "center", gap: 2, px: 3, color: T.dark, bgcolor: T.accent, textDecoration: "none", fontWeight: 800, "&:hover": { bgcolor: "#EBEBEB" } }}>شروع گفت‌وگو <Box component="span" aria-hidden="true">↗</Box></Box>}
         </Box>
         <Box
           sx={{

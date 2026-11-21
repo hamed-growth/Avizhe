@@ -19,11 +19,11 @@ const FONT = '"Estedad", "Vazirmatn", Tahoma, sans-serif';
 const T = {
   bg: "#fbfaf7",
   frame: "#ddd7ce",
-  text: "#252923",
-  muted: "#646a61",
-  accent: "#ed885f",
+  text: "#2B3C51",
+  muted: "#517383",
+  accent: "#B7C9D2",
   accentOnImage: "#ffd0b2",
-  track: "rgba(237,136,95,.3)",
+  track: "rgba(81,115,131,.3)",
   shadow: "rgba(20,32,24,.22)",
 };
 const headerColor = HEADER_TONE === "light" ? "#fff" : T.text;
@@ -722,7 +722,7 @@ export function HeroSection({ onMenuClick, showDescription = true }) {
             )}
 
             <Box data-hero-fade="" sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1.5, mt: { xs: 3.5, md: 4 } }}>
-              <Box component="a" href="#products" sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, minHeight: 46, px: 2.25, borderRadius: 99, bgcolor: T.accent, color: "#1c2622", fontWeight: 800, fontSize: ".87rem", textDecoration: "none", boxShadow: "0 10px 26px rgba(0,0,0,.13)", transition: "transform .25s ease", "&:active": { transform: "scale(.96)" }, "&:hover": { transform: "translateY(-3px)" } }}>
+              <Box component="a" href="#products" sx={{ display: "inline-flex", alignItems: "center", gap: 1.5, minHeight: 46, px: 2.25, borderRadius: 99, bgcolor: T.accent, color: "#2B3C51", fontWeight: 800, fontSize: ".87rem", textDecoration: "none", boxShadow: "0 10px 26px rgba(0,0,0,.13)", transition: "transform .25s ease", "&:active": { transform: "scale(.96)" }, "&:hover": { transform: "translateY(-3px)" } }}>
                 کشف محصولات <Box component="span" aria-hidden="true" sx={{ fontSize: "1.2rem" }}>←</Box>
               </Box>
               <Typography component="span" sx={{ color: "rgba(255,255,255,.88)", fontSize: ".78rem", fontWeight: 600, direction: "ltr", fontVariantNumeric: "tabular-nums" }}>

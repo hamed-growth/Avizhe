@@ -32,7 +32,7 @@ function MenuContent({ onPick, onClose }) {
     <Box
       ref={ref}
       dir="rtl"
-      sx={{ minHeight: "100%", display: "flex", flexDirection: "column", px: { xs: 3.5, md: 8 }, py: { xs: 3.5, md: 5 }, background: "radial-gradient(ellipse at 12% 92%, rgba(237,136,95,.13), transparent 48%)" }}
+      sx={{ minHeight: "100%", display: "flex", flexDirection: "column", px: { xs: 3.5, md: 8 }, py: { xs: 3.5, md: 5 }, background: "radial-gradient(ellipse at 12% 92%, rgba(81,115,131,.13), transparent 48%)" }}
     >
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Typography sx={{ fontWeight: 900, fontSize: ".78rem", color: T.accentDark, letterSpacing: ".06em" }}>AVIZHE — EXPLORE</Typography>

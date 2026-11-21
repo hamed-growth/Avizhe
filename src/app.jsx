@@ -4,7 +4,7 @@ import HomePage from './pages/HomePage.jsx'
 import EventPage from './pages/EventPage.jsx'
 
 const theme = createTheme({
-  palette: { primary: { main: "#252923" }, secondary: { main: "#ed885f" }, background: { default: "#fbfaf7" } },
+  palette: { primary: { main: "#2B3C51" }, secondary: { main: "#B7C9D2" }, background: { default: "#fbfaf7" } },
   shape: { borderRadius: 18 },
   typography: {
     fontFamily: '"Estedad", "Vazirmatn", Tahoma, sans-serif',
